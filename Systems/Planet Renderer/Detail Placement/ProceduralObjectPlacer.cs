@@ -24,11 +24,13 @@ namespace Spaceworks {
 		}
 
 		//List of placement rules in inspector
+		public int amountToSpawnAtOnce = 5;
 		public PlacementRule[] objectsToPool;
 
 		//Internal pooling
 		private Dictionary<string, PlacementRule> pools = new Dictionary<string, PlacementRule> ();
 		private Dictionary<QuadNode<ChunkData>, List<GameObject>> active = new Dictionary<QuadNode<ChunkData>, List<GameObject>>();
+		private Dictionary<QuadNode<ChunkData>, Coroutine> spawning = new Dictionary<QuadNode<ChunkData>, Coroutine>();
 		private GameObject poolStore;
 
 		void Start(){
@@ -50,7 +52,7 @@ namespace Spaceworks {
 		/// Spawn gameobejects for all rules on a given chunk.
 		/// </summary>
 		/// <param name="node">Node.</param>
-		private void SpawnForChunk(QuadNode<ChunkData> node, float radius, IMeshService meshService){
+		private IEnumerator SpawnForChunk(QuadNode<ChunkData> node, float radius, int amountToSpawnAtOnce, IMeshService meshService){
 			//Get list of spawned objects for this node
 			List<GameObject> spawned;
 			if (active.ContainsKey (node))
@@ -61,7 +63,7 @@ namespace Spaceworks {
 			}
 
 			//Go through all objects to place
-			int j = 0;
+			int j = 0; int k = 0;
 			foreach (PlacementRule rule in objectsToPool) {
 				//Bitshift ensures that successive rules with the same seeds will end up with different placements
 				Random.InitState ((rule.seed << j++) * node.value.bounds.center.GetHashCode());
@@ -105,6 +107,13 @@ namespace Spaceworks {
 
 					//Add spawned object to reference list
 					spawned.Add(go);
+
+					//If passed frame spawn limit, wait till next frame and reset the count
+					k++;
+					if (k >= amountToSpawnAtOnce) {
+						k = 0;
+						yield return null;
+					}
 				}
 
 			}
@@ -131,8 +140,11 @@ namespace Spaceworks {
 		/// </summary>
 		/// <param name="node">Node.</param>
 		public override void ShowChunkDetails (QuadNode<ChunkData> node,  float radius, IMeshService meshService){
-			//TODO request based system to not hog resources or slow down game
-			SpawnForChunk (node, radius, meshService);
+			//Only spawn if we don't already have an active spawning session for it
+			if(!this.spawning.ContainsKey(node)){
+				Coroutine co = StartCoroutine (SpawnForChunk (node, radius, Mathf.Max(1, this.amountToSpawnAtOnce), meshService));
+				this.spawning [node] = co;
+			}
 		}
 
 		/// <summary>
@@ -140,6 +152,12 @@ namespace Spaceworks {
 		/// </summary>
 		/// <param name="node">Node.</param>
 		public override void HideChunkDetails (QuadNode<ChunkData> node){
+			//Stop active spawning session if it exists
+			if (this.spawning.ContainsKey (node)) {
+				StopCoroutine (this.spawning [node]);
+				this.spawning.Remove (node);
+			}
+
 			//This chunk has no objects associated to it
 			List<GameObject> objects;
 			if (!active.TryGetValue (node, out objects)) {

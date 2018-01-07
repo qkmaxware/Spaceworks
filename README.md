@@ -9,7 +9,7 @@ Spaceworks is a work-in-progress collection of C# classes for the Unity3D Game E
 1. Materials
 	* Preconfigured test materials
 2. Primitives
-	* C# classes that are ustilized by each of the systems within Spaceworks
+	* C# classes that are utilized by each of the systems within Spaceworks
 3. Scenes
 	* Test scenes for each system
 4. Shaders
@@ -37,12 +37,12 @@ At the moment, the method to use this system is a little unintuitive.
 			1. **CpuMeshGenerator** - Creates meshes procedurally on the CPU using Perlin noise
 			2. **CubemapMeshGenerator** - Creates meshes by sampling a 6 sided cubemap representing the height of the terrain
 			3. **SphereMeshGenerator** - Creates meshes as a simple sphere with no roughness
-		* You can create your own Generation Service by creating a new class that extending **IMeshService**
+		* You can create your own Generation Service by creating a new class that extends **IMeshService**
 	3. Texture Service (Optional)
 		* The Texture Serivce configures the supplied material
 		* Texture Services initialize the material's parameters and update parameters if the planet is moved
 		* Only one default Texture Service is provided for the Spaceworks "Planet Shader"
-		* You can create your own Texture Service by creating a class that extending **ITextureService**
+		* You can create your own Texture Service by creating a class that extends **ITextureService**
 	4. Detail Service (Optional)
 		* Detail services spawns GameObjects on a planet's surface when the surface area reaches maximum detail in the LOD system
 		* The **ProceduralObjectPlacer** is the only Detail Service provided
