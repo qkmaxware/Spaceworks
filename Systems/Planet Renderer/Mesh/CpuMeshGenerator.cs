@@ -25,25 +25,66 @@ namespace Spaceworks {
 		[Range(0,1)]
 		public float blendAmount = 0;
 
-		public INoise noise = new PerlinF();
+		public INoise noise = new Perlin();
 
-		public override float GetAltitude(Vector3 pos, float baseRadius, out Vector3 normal){
+		public override float GetAltitude(Vector3 pos, float baseRadius){
 			//Sample
-			NoiseSample surface = noise.Sum(pos, surfaceShape);
+			float surface = noise.Sum(pos, surfaceShape);
 
-			NoiseSample detail = noise.Sum (pos, hillNoise);
-			NoiseSample mountains = noise.Sum (pos, mountainNoise);
+			float detail = noise.Sum (pos, hillNoise);
+			float mountains = noise.Sum (pos, mountainNoise);
 
 			//Assign value
-			float baseh = baseRadius + surface.value * continentHeight;
-			float detailh = detail.value * hillHeight;
+			float baseh = baseRadius + surface * continentHeight;
+			float detailh = detail * hillHeight;
 			float height = baseh + detailh;
-
-			//Assign normal
-			normal = pos;
 
 			//Return
 			return height;
+		}
+
+		public override Vector3 GetNormal(Vector3 pos, float baseRadius){
+			//Default operation
+			//return pos;
+
+			//Setup
+			float e = 0.0001f; //Some very small number
+			Vector3 r = pos;
+
+			//Position at the target sphere point
+			Vector3 target = r * GetAltitude (r, baseRadius);
+
+			//Rotate r by some small amount around the y-axis
+			r = Quaternion.Euler (0, e, 0) * pos ; 
+			Vector3 targetRight = r * GetAltitude (r, baseRadius);
+
+			//r = Quaternion.Euler (0, -e, 0) * pos;
+			//Vector3 targetLeft = r * GetAltitude (r, baseRadius);
+
+			//Rotate r by some small amount in the "x-axis"
+			Vector3 xaxis = Vector3.Cross(Vector3.up, pos).normalized;
+
+			r = Quaternion.AngleAxis (e, xaxis) * pos;
+			Vector3 targetUp = r * GetAltitude (r, baseRadius);
+
+			//r = Quaternion.AngleAxis (-e, xaxis) * pos;
+			//Vector3 targetDown = r * GetAltitude (r, baseRadius);
+
+			//Create Normal Fragment Vectors
+			//TODO Add Noraml Fragments From All Directions
+			Vector3 up = (targetUp - target).normalized;
+			Vector3 right = (targetRight - target).normalized;
+			//Vector3 left = (targetLeft - target).normalized;
+			//Vector3 down = (targetDown - target).normalized;
+
+			Vector3 normal = -Vector3.Cross(right, up);
+			//normal += Vector3.Cross(down, right);
+			//normal += Vector3.Cross (up, left);
+			//normal += Vector3.Cross (left, down);
+
+			//Return "Averaged" Normal
+			//normal = normal.normalized;
+			return normal;
 		}
 
 		public override Mesh Make(Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, int resolution, float radius){
@@ -85,8 +126,7 @@ namespace Spaceworks {
 					Vector3 pos = IMeshService.Spherify(rawPosition);
 
 					//Sample Noise to Get Altitude
-					Vector3 norm;
-					float alt = GetAltitude(pos, radius, out norm);
+					float alt = GetAltitude(pos, radius);
 
 					v [idx] = pos * alt;
 
@@ -100,7 +140,7 @@ namespace Spaceworks {
 
 					//Create Normals
 					//TODO take terrain shape into account
-					n[idx] = norm;
+					n[idx] = GetNormal(pos, radius);
 
 					//Create Triangles
 					if (i > 0 && j > 0) {

@@ -6,10 +6,13 @@ namespace Spaceworks {
 
 	public class SphereMeshGenerator : IMeshService {
 
-		public override float GetAltitude (Vector3 pos, float baseRadius, out Vector3 normal)
+		public override float GetAltitude (Vector3 pos, float baseRadius)
 		{
-			normal = pos;
 			return baseRadius;
+		}
+
+		public override Vector3 GetNormal(Vector3 pos, float baseRadius){
+			return pos;
 		}
 
 		public override Mesh Make(Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, int subdivisions, float radius) {
@@ -38,9 +41,7 @@ namespace Spaceworks {
                         j * step
                     );
 					Vector3 pos = IMeshService.Spherify(rawPosition);
-					Vector3 norm;
-					pos = pos * GetAltitude (pos, radius, out norm);
-                    v[idx] = pos;
+					v[idx] = pos * GetAltitude (pos, radius);;
 
                     //Create uv
                     Vector2 uv = Vector2.Lerp(
@@ -51,7 +52,7 @@ namespace Spaceworks {
                     u[idx] = uv;
 
                     //Create normals
-                    n[idx] = norm;
+					n[idx] = GetNormal(pos, radius);
 
                     //Create triangles
                     if (i > 0 && j > 0) {

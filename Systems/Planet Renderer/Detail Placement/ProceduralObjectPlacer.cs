@@ -85,8 +85,7 @@ namespace Spaceworks {
 					Vector3 spherePos = IMeshService.Spherify(cubePos);
 
 					//Determine altitude, skip if not in range
-					Vector3 norm;
-					float altitude = meshService.GetAltitude(spherePos, radius, out norm);
+					float altitude = meshService.GetAltitude(spherePos, radius);
 					if (altitude < rule.altitudeRange.low || altitude > rule.altitudeRange.high)
 						continue;
 					Vector3 pos = spherePos * altitude; 

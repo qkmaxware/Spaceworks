@@ -124,10 +124,13 @@ namespace Spaceworks{
 			return value;
 		}
 
-		public override float GetAltitude (Vector3 pos, float baseRadius, out Vector3 normal)
+		public override float GetAltitude (Vector3 pos, float baseRadius)
 		{
-			normal = pos;
 			return Mathf.Lerp(range.low, range.high, SampleHeightmap (pos)) + baseRadius;
+		}
+
+		public override Vector3 GetNormal(Vector3 pos, float baseRadius){
+			return pos;
 		}
 
 		public override Mesh Make (Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, int resolution, float radius)
@@ -170,8 +173,7 @@ namespace Spaceworks{
 					Vector3 pos = IMeshService.Spherify(rawPosition);
 
 					//Sample Noise to Get Altitude
-					Vector3 norm;
-					float alt = GetAltitude(pos, radius, out norm);
+					float alt = GetAltitude(pos, radius);
 
 					v [idx] = pos * alt;
 
@@ -185,7 +187,7 @@ namespace Spaceworks{
 
 					//Create Normals
 					//TODO take terrain shape into account
-					n[idx] = pos;
+					n[idx] = GetNormal(pos, radius);
 
 					//Create Triangles
 					if (i > 0 && j > 0) {

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Spaceworks {
 
-	public class Perlin {
+	public class Perlin : INoise{
 
 		private static readonly int[] p = new int[512];
 		private static readonly int[] permutation = new int[]{151, 160, 137, 91, 90, 15,
@@ -93,7 +93,7 @@ namespace Spaceworks {
 		/// <param name="x">The x coordinate.</param>
 		/// <param name="y">The y coordinate.</param>
 		/// <param name="z">The z coordinate.</param>
-		public static double Noise(double x, double y, double z) {
+		private static double Noise(double x, double y, double z) {
 			int X = fastfloor(x) & 255;
 			int Y = fastfloor(y) & 255;
 			int Z = fastfloor(z) & 255;
@@ -123,8 +123,11 @@ namespace Spaceworks {
 						grad(p[BB + 1], x - 1, y - 1, z - 1))));
 		}
 
-		/*
-		public float value(Vector3 x, NoiseOptions opts){
+		public float Value (Vector3 pos, float freq){
+			return (float)Noise (pos.x * freq, pos.y * freq, pos.z * freq);
+		}
+
+		public float Sum (Vector3 pos, NoiseOptions opts){
 			//Setup
 			double total = 0.0f;
 			float maxAmplitude = 0.0f;
@@ -140,10 +143,10 @@ namespace Spaceworks {
 				//int sy = rng.Next(-10000, 10000);
 				//int sz = rng.Next(-10000, 10000);
 
-				total += Perlin.Noise(
-					(x.x + opts.offset.x) * frequency - opts.seed, 
-					(x.y + opts.offset.y) * frequency - opts.seed, 
-					(x.z + opts.offset.z) * frequency - opts.seed
+				total += Noise(
+					(pos.x + opts.offset.x) * frequency - opts.seed, 
+					(pos.y + opts.offset.y) * frequency - opts.seed, 
+					(pos.z + opts.offset.z) * frequency - opts.seed
 				) * amplitude;
 				frequency *= opts.lacunarity;
 				maxAmplitude += amplitude;
@@ -153,7 +156,7 @@ namespace Spaceworks {
 
 			//Return the processed value
 			return noise;
-		}*/
+		}
 
 	}
 

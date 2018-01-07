@@ -22,7 +22,8 @@ namespace Spaceworks {
 			return new Vector3(X, Y, Z);
 		}
 			
-		public abstract float GetAltitude (Vector3 pos, float baseRadius, out Vector3 normal);
+		public abstract float GetAltitude (Vector3 pos, float baseRadius);
+		public abstract Vector3 GetNormal (Vector3 pos, float baseRadius);
 		public abstract Mesh Make (Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, int resolution, float radius);
 	}
 

@@ -3,16 +3,25 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-namespace Spaceworks{
+namespace Spaceworks {
 
-	[CustomEditor(typeof(CpuMeshGenerator))]
+	[CustomEditor (typeof(CpuMeshGenerator))]
 	public class CpuMeshGeneratorEditor : Editor {
 
 		private SixTexture surface;
 		private SixTexture hills;
 		private SixTexture mountains;
 
-		public class SixTexture{
+		public class SixTexture {
+
+			public enum Face {
+				Top,
+				Bottom,
+				Left,
+				Right,
+				Front,
+				Back
+			}
 
 			private int x;
 			private int y;
@@ -27,7 +36,7 @@ namespace Spaceworks{
 			private Color a;
 			private Color b;
 
-			public SixTexture(Color a, Color b, int x, int y){
+			public SixTexture (Color a, Color b, int x, int y) {
 				this.x = x;
 				this.y = y;
 
@@ -35,7 +44,7 @@ namespace Spaceworks{
 				this.b = b;
 			}
 
-			private void TestExistance(){
+			private void TestExistance () {
 				if (top == null) {
 					top = new Texture2D (x, y);
 					bottom = new Texture2D (x, y);
@@ -46,44 +55,92 @@ namespace Spaceworks{
 				}
 			}
 
-			public void Draw(NoiseOptions opts, float discrete = -1000){
-				//Ensure textures exist
-				TestExistance();
+			private void FillTexture (Texture2D t, Face face, NoiseOptions opts, float discrete = -1000) {
+				float w = t.width - 1;
+				float h = t.height - 1;
+				Perlin perl = new Perlin ();
 
-				//Generate Textures
-				PerlinF perl = new PerlinF ();
-				for(int i = 0; i < x; i++){
-					for (int j = 0; j < y; j++) {
-						float fx = Mathf.Lerp(-1, 1, (i / (x - 0.1f)));
-						float fy = Mathf.Lerp (-1, 1, j / (y - 0.1f));
-
-						Vector3 p = new Vector3 (fx, 0, fy);
-
-						//float t = noise.value(p, n);
-						float t = perl.Sum(p, opts).value;
-
-						Color c = (discrete <= 1 && discrete >= -1) ? (t < discrete ? a : b) : Color.Lerp (a, b, (t + 1) * 0.5f);
-
-						top.SetPixel (i, j, c);
+				for (int i = 0; i <= w; i++) {
+					for (int j = 0; j <= h; j++) {
+						float xp = 0, yp = 0, zp = 0;
+                
+						switch (face) {
+							case Face.Top:
+								yp = 1;
+								xp = (i / w) * 2 - 1;
+								zp = 1 - (j / h) * 2;
+								break;
+							case Face.Bottom:
+								yp = -1;
+								xp = (i / w) * 2 - 1;
+								zp = (j / h) * 2 - 1;
+								break;
+							case Face.Left:
+								xp = -1;
+								zp = 1 - (i / w) * 2;
+								yp = 1 - (j / h) * 2;
+								break;
+							case Face.Back:
+								zp = -1;
+								xp = (i / w) * 2 - 1;
+								yp = 1 - (j / h) * 2;
+								break;
+							case Face.Right:
+								xp = 1;
+								zp = (i / w) * 2 - 1;
+								yp = 1 - (j / h) * 2;
+								break;
+							case Face.Front:
+								zp = 1;
+								xp = 1 - (i / w) * 2;
+								yp = 1 - (j / h) * 2;
+								break;
+						}
+                
+						Vector3 pos = IMeshService.Spherify (new Vector3(xp, yp, zp));
+                
+						float n = perl.Sum (pos, opts);
+						t.SetPixel(i,j, (discrete <= 1 && discrete >= -1) ? (n < discrete ? a : b) : Color.Lerp (a, b, (n + 1) * 0.5f));
 					}
 				}
+
+			}
+
+			public void Draw (NoiseOptions opts, float discrete = -1000) {
+				//Ensure textures exist
+				TestExistance ();
+
+				//Generate Textures
+				FillTexture(top, Face.Top, opts, discrete);
+				FillTexture(bottom, Face.Bottom, opts, discrete);
+				FillTexture(left, Face.Left, opts, discrete);
+				FillTexture(right, Face.Right, opts, discrete);
+				FillTexture(front, Face.Front, opts, discrete);
+				FillTexture(back, Face.Back, opts, discrete);
+
+				//Apply textures
 				top.Apply ();
+				bottom.Apply ();
+				left.Apply ();
+				right.Apply ();
+				front.Apply();
+				back.Apply ();
 
 				//Draw Textures
 				GUILayout.BeginVertical ();
 
-				GUILayout.Label(top);
+				GUILayout.Label (top);
 
 				GUILayout.BeginHorizontal ();
 
-				//GUILayout.Label (back);
-				//GUILayout.Label (right);
-				//GUILayout.Label (front);
-				//GUILayout.Label (left);
+				GUILayout.Label (back);
+				GUILayout.Label (right);
+				GUILayout.Label (front);
+				GUILayout.Label (left);
 
 				GUILayout.EndHorizontal ();
 
-				//GUILayout.Label (bottom);
+				GUILayout.Label (bottom);
 
 				GUILayout.EndVertical ();
 			}
@@ -94,20 +151,20 @@ namespace Spaceworks{
 			CpuMeshGenerator gen = (CpuMeshGenerator)target;
 
 			//Ensure references
-			if (surface == null)
-				surface = new SixTexture (Color.blue, Color.green, 64, 64);
-			if (hills == null)
-				hills = new SixTexture (Color.black, Color.white, 64, 64);
-			if (mountains == null)
-				mountains = new SixTexture (Color.black, Color.white, 64, 64);
+			//if (surface == null)
+				//surface = new SixTexture (Color.blue, Color.green, 64, 64);
+			//if (hills == null)
+				//hills = new SixTexture (Color.black, Color.white, 64, 64);
+			//if (mountains == null)
+				//mountains = new SixTexture (Color.black, Color.white, 64, 64);
 
 			//Draw image
-			surface.Draw(gen.surfaceShape, gen.seaLevel);
+			//surface.Draw (gen.surfaceShape, gen.seaLevel);
 			//hills.Draw (gen.hillNoise);
 			//mountains.Draw (gen.mountainNoise);
 
 			//Draw the default inspector
-			DrawDefaultInspector();
+			DrawDefaultInspector ();
 		}
 	}
 
