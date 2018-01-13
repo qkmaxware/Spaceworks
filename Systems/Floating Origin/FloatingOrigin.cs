@@ -19,6 +19,12 @@ namespace Spaceworks {
 			}
 		}
 
+		public static WorldPosition center {
+			get { 
+				return instance ? instance.sceneCenter : new WorldPosition();
+			}
+		}
+
         public Transform foci;
         public float bufferDistance = 1000;
 

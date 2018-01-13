@@ -25,18 +25,58 @@ namespace Spaceworks {
             }
         }
 			
-        public WorldPosition worldPosition {
+		public FloatingTransform parent {
 			get;
 			set;
-        }
+		}
+
+		public WorldPosition localPosition {
+			get;
+			set;
+		}
+
+		public WorldPosition worldPosition {
+			get{ 
+				return (parent == null) ? this.localPosition : this.localPosition + parent.worldPosition;
+			}
+			set{ 
+				if (parent == null)
+					this.localPosition = value;
+				else
+					this.localPosition = value - parent.worldPosition;
+			}
+		}
 
         public void Start() {
             FloatingOrigin.Add(this);
             this.worldPosition = new WorldPosition(this.unityPosition);
         }
 
+		public void SetParent(FloatingTransform parent){
+			this.parent = parent;
+			UpdateUnityPosition ();
+		}
+
+		public void SetLocalPosition(WorldPosition p){
+			this.localPosition = p;
+			UpdateUnityPosition ();
+		}
+
+		public void SetWorldPosition(WorldPosition p){
+			this.worldPosition = p;
+			UpdateUnityPosition ();
+		}
+
+		public void UpdateUnityPosition(){
+			unityPosition = (worldPosition - FloatingOrigin.center).ToVector3();
+		}
+
+		public void UpdateUnityPosition(WorldPosition sceneCenter){
+			unityPosition = (worldPosition - sceneCenter).ToVector3();
+		}
+
 		public virtual void OnOriginChange(WorldPosition sceneCenter) {
-            unityPosition = (worldPosition - sceneCenter).ToVector3();
+			UpdateUnityPosition (sceneCenter);
         }
 
     }

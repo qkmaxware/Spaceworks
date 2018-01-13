@@ -10,11 +10,20 @@ namespace Spaceworks{
 			Red, Green, Blue, Alpha
 		}
 
-		public bool useSkirts = false;
+		[Header("Mesh Settings")]
+        public int resolution = 24;
+        public bool useSkirts = false;
 		[Range(0,1)]
 		public float skirtSize = 0.9f;
 		public HighLowPair range;
-		public Cubemap heightmap;
+
+		[Header("Heightmaps Settings")]
+		public Texture2D heightmapTop;
+		public Texture2D heightmapBottom;
+		public Texture2D heightmapLeft;
+		public Texture2D heightmapRight;
+		public Texture2D heightmapFront;
+		public Texture2D heightmapBack;
 		public ColourComponent heightColour;
 
 		private float SampleColour(Color colour){
@@ -77,46 +86,46 @@ namespace Spaceworks{
 			switch(face){
 				//Right
 				case CubemapFace.PositiveX:
-					float x = ((pos.z + 1) * 0.5f) * heightmap.width;
-					float y = (1 - (pos.y + 1) * 0.5f) * heightmap.height;
-					Color c = heightmap.GetPixel (face, (int)x, (int)y);
+					float x = ((pos.z + 1) * 0.5f) * heightmapRight.width;
+					float y = ((pos.y + 1) * 0.5f) * heightmapRight.height;
+					Color c = heightmapRight.GetPixel ((int)x, (int)y);
 					value = SampleColour (c);
 					break;
 				//Left
 				case CubemapFace.NegativeX:
-					x = (1 - (pos.z + 1) * 0.5f) * heightmap.width;
-					y = (1 - (pos.y + 1) * 0.5f) * heightmap.height;
-					c = heightmap.GetPixel (face, (int)x, (int)y);
+					x = (1 - (pos.z + 1) * 0.5f) * heightmapLeft.width;
+					y = ((pos.y + 1) * 0.5f) * heightmapLeft.height;
+					c = heightmapLeft.GetPixel ((int)x, (int)y);
 					value = SampleColour (c);
 					break;
 
 				//Up
 				case CubemapFace.PositiveY:
-					x = ((pos.x + 1) * 0.5f) * heightmap.width;
-					y = (1 - (pos.z + 1) * 0.5f) * heightmap.height;
-					c = heightmap.GetPixel (face, (int)x, (int)y);
+					x = ((pos.x + 1) * 0.5f) * heightmapTop.width;
+					y = (1 - (pos.z + 1) * 0.5f) * heightmapTop.height;
+					c = heightmapTop.GetPixel ((int)x, (int)y);
 					value = SampleColour (c);
 					break;
 				//Down
 				case CubemapFace.NegativeY:
-					x = ((pos.x + 1) * 0.5f) * heightmap.width;
-					y = ((pos.z + 1) * 0.5f) * heightmap.height;
-					c = heightmap.GetPixel (face, (int)x, (int)y);
+					x = ((pos.x + 1) * 0.5f) * heightmapBottom.width;
+					y = ((pos.z + 1) * 0.5f) * heightmapBottom.height;
+					c = heightmapBottom.GetPixel ((int)x, (int)y);
 					value = SampleColour (c);
 					break;
 
 				//Forward
 				case CubemapFace.PositiveZ:
-					x = (1 - (pos.x + 1) * 0.5f) * heightmap.width;
-					y = (1 - (pos.y + 1) * 0.5f) * heightmap.height;
-					c = heightmap.GetPixel (face, (int)x, (int)y);
+					x = (1 - (pos.x + 1) * 0.5f) * heightmapFront.width;
+					y = ((pos.y + 1) * 0.5f) * heightmapFront.height;
+					c = heightmapFront.GetPixel ((int)x, (int)y);
 					value = SampleColour (c);
 					break;
 				//Back
 				case CubemapFace.NegativeZ:
-					x = ((pos.x + 1) * 0.5f) * heightmap.width;
-					y = (1 - (pos.y + 1) * 0.5f) * heightmap.height;
-					c = heightmap.GetPixel (face, (int)x, (int)y);
+					x = ((pos.x + 1) * 0.5f) * heightmapBack.width;
+					y = ((pos.y + 1) * 0.5f) * heightmapBack.height;
+					c = heightmapBack.GetPixel ((int)x, (int)y);
 					value = SampleColour (c);
 					break;
 			}
@@ -124,16 +133,15 @@ namespace Spaceworks{
 			return value;
 		}
 
-		public override float GetAltitude (Vector3 pos, float baseRadius)
-		{
+		public float GetAltitude (Vector3 pos, float baseRadius){
 			return Mathf.Lerp(range.low, range.high, SampleHeightmap (pos)) + baseRadius;
 		}
 
-		public override Vector3 GetNormal(Vector3 pos, float baseRadius){
+		public Vector3 GetNormal(Vector3 pos, float baseRadius){
 			return pos;
 		}
 
-		public override Mesh Make (Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, int resolution, float radius)
+		public override Mesh Make (Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, float radius)
 		{
 			//Initial Calculations
 			int width = resolution + 2;

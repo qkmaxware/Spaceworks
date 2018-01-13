@@ -6,7 +6,8 @@ namespace Spaceworks {
 
 	public class CpuMeshGenerator : IMeshService {
 
-		[Header("Generation Options")]
+        [Header("Generation Options")]
+        public int resolution = 24;
 		public bool useSkirts = false;
 		[Range(0,1)]
 		public float skirtSize = 0.9f;
@@ -27,23 +28,27 @@ namespace Spaceworks {
 
 		public INoise noise = new Perlin();
 
-		public override float GetAltitude(Vector3 pos, float baseRadius){
+		public float GetAltitude(Vector3 pos, float baseRadius){
 			//Sample
 			float surface = noise.Sum(pos, surfaceShape);
 
 			float detail = noise.Sum (pos, hillNoise);
 			float mountains = noise.Sum (pos, mountainNoise);
+			float diff = mountains < detail ? 0 : (mountains - detail);
 
-			//Assign value
-			float baseh = baseRadius + surface * continentHeight;
-			float detailh = detail * hillHeight;
-			float height = baseh + detailh;
+			//Blend
+			float delta = detail * hillHeight;/*(detail > mountains) 
+				? detail * hillHeight 
+				: (diff < blendAmount 
+					? Mathf.Lerp(detail * hillHeight, mountains * mountainHeight, Mathf.Clamp01(diff / blendAmount)) 
+					: mountains * mountainHeight);*/
+			float combined = (surface > seaLevel) ? (surface * continentHeight) + delta : (surface * continentHeight);
 
-			//Return
-			return height;
+			//Assign
+			return baseRadius + combined;
 		}
 
-		public override Vector3 GetNormal(Vector3 pos, float baseRadius){
+		public Vector3 GetNormal(Vector3 pos, float baseRadius){
 			//Default operation
 			//return pos;
 
@@ -87,7 +92,7 @@ namespace Spaceworks {
 			return normal;
 		}
 
-		public override Mesh Make(Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, int resolution, float radius){
+		public override Mesh Make(Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, float radius){
 			//Initial Calculations
 			int width = resolution + 2;
 			int size = width * width;

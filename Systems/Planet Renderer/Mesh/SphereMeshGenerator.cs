@@ -6,16 +6,18 @@ namespace Spaceworks {
 
 	public class SphereMeshGenerator : IMeshService {
 
-		public override float GetAltitude (Vector3 pos, float baseRadius)
+        public int subdivisions = 24;
+
+		public float GetAltitude (Vector3 pos, float baseRadius)
 		{
 			return baseRadius;
 		}
 
-		public override Vector3 GetNormal(Vector3 pos, float baseRadius){
+		public Vector3 GetNormal(Vector3 pos, float baseRadius){
 			return pos;
 		}
 
-		public override Mesh Make(Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, int subdivisions, float radius) {
+		public override Mesh Make(Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, float radius) {
             int width = subdivisions + 2;
             int size = width * width;
             Vector3[] v = new Vector3[size];

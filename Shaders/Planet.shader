@@ -125,7 +125,7 @@
  
  
 			//Slope blending
-			float slope = dot(normalize(IN.worldNormal), dir);
+			float slope = abs(dot(normalize(IN.worldNormal), dir));
 			float threshold = clamp(slope / _SlopeThreshold, 0, 1);
  
 			albedo = albedo * (threshold) + cliff * _CliffColour * (1 - threshold);

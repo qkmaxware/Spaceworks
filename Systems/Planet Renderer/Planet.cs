@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 namespace Spaceworks {
 
@@ -11,7 +12,6 @@ namespace Spaceworks {
         public float radius = 1;
 
         [Header("Level of detail")]
-        public int resolution = 12;
         public int lodDepth = 1;
         public int highestQualityAtDistance = 50;
 
@@ -38,7 +38,6 @@ namespace Spaceworks {
         public QuadNode<ChunkData> root { get; private set; }
 
         public int maxResolutionAt = 50;
-        public int resolution = 12;
         public int maxDepth { get; private set; }
 
 		public float radius { get; private set;}
@@ -58,10 +57,9 @@ namespace Spaceworks {
 		//Actionlist
 		private List<System.Action<QuadNode<ChunkData>>> listeners = new List<System.Action<QuadNode<ChunkData>>>();
 
-        public PlanetFace(IMeshService ms, IDetailer ds, float baseRadius, int resolution, int minDistance, int treeDepth, Range3d range, Material material) {
+        public PlanetFace(IMeshService ms, IDetailer ds, float baseRadius, int minDistance, int treeDepth, Range3d range, Material material) {
             //Apply params
             this.maxResolutionAt = minDistance;
-            this.resolution = resolution;
             this.maxDepth = treeDepth;
             this.material = material;
 			this.meshService = ms;
@@ -243,8 +241,8 @@ namespace Spaceworks {
                 MeshFilter filter = meshPool.Dequeue();
 
                 //Populate mesh
-				filter.sharedMesh = meshService.Make(node.range.a, node.range.b, node.range.d, node.range.c, resolution, this.radius);
-                //filter.sharedMesh = SubPlane.Make(node.range.a, node.range.b, node.range.d, node.range.c, resolution); 
+				filter.sharedMesh = meshService.Make(node.range.a, node.range.b, node.range.d, node.range.c, this.radius);
+				//filter.sharedMesh = SubPlane.Make(node.range.a, node.range.b, node.range.d, node.range.c, resolution); 
 
 				//Set chunk data if it was never computed before
 				if(node.value.bounds == null){
@@ -273,7 +271,7 @@ namespace Spaceworks {
 					}
 					//Call detailing service if available
 					if (detailService != null)
-						detailService.ShowChunkDetails (node, this.radius, this.meshService);
+						detailService.ShowChunkDetails (node, filter.sharedMesh);
 				}
 
                 //Add me if I don't already exist
@@ -373,32 +371,32 @@ namespace Spaceworks {
 
 			UpdateMaterial (go, true);
 
-			this.topFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.resolution, config.highestQualityAtDistance, config.lodDepth, topRange, config.material);
+			this.topFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, topRange, config.material);
 			this.topFace.go.name = "Top";
 			this.topFace.transform.SetParent(go.transform);
             this.topFace.transform.localPosition = Vector3.zero;
 
-			this.bottomFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.resolution, config.highestQualityAtDistance, config.lodDepth, bottomRange, config.material);
+			this.bottomFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, bottomRange, config.material);
 			this.bottomFace.go.name = "Bottom";
 			this.bottomFace.transform.SetParent(go.transform);
             this.bottomFace.transform.localPosition = Vector3.zero;
 
-			this.leftFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.resolution, config.highestQualityAtDistance, config.lodDepth, leftRange, config.material);
+			this.leftFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, leftRange, config.material);
 			this.leftFace.go.name = "Left";
 			this.leftFace.transform.SetParent(go.transform);
             this.leftFace.transform.localPosition = Vector3.zero;
 
-			this.rightFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.resolution, config.highestQualityAtDistance, config.lodDepth, rightRange, config.material);
+			this.rightFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, rightRange, config.material);
 			this.rightFace.go.name = "Right";
 			this.rightFace.transform.SetParent(go.transform);
             this.rightFace.transform.localPosition = Vector3.zero;
 
-			this.backFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.resolution, config.highestQualityAtDistance, config.lodDepth, backRange, config.material);
+			this.backFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, backRange, config.material);
 			this.backFace.go.name = "Back";
 			this.backFace.transform.SetParent(go.transform);
             this.backFace.transform.localPosition = Vector3.zero;
 
-			this.frontFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.resolution, config.highestQualityAtDistance, config.lodDepth, frontRange, config.material);
+			this.frontFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, frontRange, config.material);
 			this.frontFace.go.name = "Front";
 			this.frontFace.transform.SetParent(go.transform);
             this.frontFace.transform.localPosition = Vector3.zero;

@@ -15,6 +15,8 @@ namespace Spaceworks {
 
 			[Header("Placement Rules")]
 			public int seed = 0;
+			[Range(0, 90)]
+			public float slopeLimit = 60.0f;
 			public HighLowPair altitudeRange = new HighLowPair (float.MaxValue, 0);
 			public HighLowPair amountRange;
 			public HighLowPair scaleRange;
@@ -52,7 +54,7 @@ namespace Spaceworks {
 		/// Spawn gameobejects for all rules on a given chunk.
 		/// </summary>
 		/// <param name="node">Node.</param>
-		private IEnumerator SpawnForChunk(QuadNode<ChunkData> node, float radius, int amountToSpawnAtOnce, IMeshService meshService){
+		private IEnumerator SpawnForChunk(QuadNode<ChunkData> node, Mesh m, int amountToSpawnAtOnce){
 			//Get list of spawned objects for this node
 			List<GameObject> spawned;
 			if (active.ContainsKey (node))
@@ -62,6 +64,9 @@ namespace Spaceworks {
 				active [node] = spawned;
 			}
 
+			Vector3[] verts = m.vertices;
+			int[] tris = m.triangles;
+
 			//Go through all objects to place
 			int j = 0; int k = 0;
 			foreach (PlacementRule rule in objectsToPool) {
@@ -70,28 +75,33 @@ namespace Spaceworks {
 
 				//Number of this prefab to spawn
 				int number = (int)Random.Range (rule.amountRange.low, rule.amountRange.high);
+				float sl = rule.slopeLimit;
 
 				for (int i = 0; i < number; i++) {
+					int faceIdx = Random.Range (0, (tris.Length / 3) - 1) * 3;
+
 					//Random x and y coordinates
 					float rx = Random.value;
 					float ry = Random.value;
 
-					//Position on cube face
-					Vector3 cubePos = Vector3.Lerp (
-						Vector3.Lerp(node.range.a, node.range.b, rx),
-						Vector3.Lerp(node.range.d, node.range.c, rx),
-						ry
-					);
+					float sqrt_rx = Mathf.Sqrt (rx);
 
-					//Convert to sphere
-					Vector3 spherePos = IMeshService.Spherify(cubePos);
+					Vector3 a = verts [tris[faceIdx]];
+					Vector3 b = verts [tris[faceIdx + 1]];
+					Vector3 c = verts [tris[faceIdx + 2]];
 
-					//Determine altitude, skip if not in range
-					float altitude = meshService.GetAltitude(spherePos, radius);
-					if (altitude < rule.altitudeRange.low || altitude > rule.altitudeRange.high)
+					Vector3 pos = (1 - sqrt_rx) * a + (sqrt_rx * (1 - ry)) * b + (sqrt_rx * ry) * c;
+
+					//Ignore if slope is too much
+					float angle = Vector3.Angle(pos, Vector3.Cross(b - a, c - a));
+					if (angle > rule.slopeLimit)
 						continue;
-					Vector3 pos = spherePos * altitude; 
-					
+
+					//Ignore if not in altitude range
+					float distance = pos.magnitude;
+					if (distance < rule.altitudeRange.low || distance > rule.altitudeRange.high)
+						continue;
+
 					//Determine scale
 					Vector3 scale = Vector3.one * Random.Range(rule.scaleRange.low, rule.scaleRange.high);
 
@@ -103,7 +113,7 @@ namespace Spaceworks {
 					go.SetActive(true);
 					go.transform.localScale = scale;
 					go.transform.localPosition = pos;
-					go.transform.localRotation = Quaternion.FromToRotation (Vector3.up, spherePos);// * Quaternion.Euler(0, 360 * Random.value, 0);
+					go.transform.localRotation = Quaternion.FromToRotation (Vector3.up, pos);// * Quaternion.Euler(0, 360 * Random.value, 0);
 
 					//Add spawned object to reference list
 					spawned.Add(go);
@@ -139,10 +149,10 @@ namespace Spaceworks {
 		/// Shows the chunk details.
 		/// </summary>
 		/// <param name="node">Node.</param>
-		public override void ShowChunkDetails (QuadNode<ChunkData> node,  float radius, IMeshService meshService){
+		public override void ShowChunkDetails (QuadNode<ChunkData> node,  Mesh m){
 			//Only spawn if we don't already have an active spawning session for it
 			if(!this.spawning.ContainsKey(node)){
-				Coroutine co = StartCoroutine (SpawnForChunk (node, radius, Mathf.Max(1, this.amountToSpawnAtOnce), meshService));
+				Coroutine co = StartCoroutine (SpawnForChunk (node, m, Mathf.Max(1, this.amountToSpawnAtOnce)));
 				this.spawning [node] = co;
 			}
 		}
@@ -154,7 +164,9 @@ namespace Spaceworks {
 		public override void HideChunkDetails (QuadNode<ChunkData> node){
 			//Stop active spawning session if it exists
 			if (this.spawning.ContainsKey (node)) {
-				StopCoroutine (this.spawning [node]);
+				Coroutine c = (this.spawning [node]);
+				if(c != null)
+					StopCoroutine (this.spawning [node]);
 				this.spawning.Remove (node);
 			}
 

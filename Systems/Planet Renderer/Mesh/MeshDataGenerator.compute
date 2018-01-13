@@ -1,0 +1,85 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+//Input vars
+int indexingWidth; //width of loop
+float baseRadius;
+float3 topLeft; float3 topRight;
+float3 bottomLeft; float3 bottomRight;
+
+//Output vars
+RWStructuredBuffer<float3> vertices;
+RWStructuredBuffer<float3> normals;
+RWStructuredBuffer<float2> uvs;
+RWStructuredBuffer<int> triangles;
+
+float3 spherify(float3 pos) {
+        float x = pos.x;
+        float y = pos.y;
+        float z = pos.z;
+               
+        float xx = x*x;
+        float yy = y*y;
+        float zz = z*z;
+               
+        float X = x * sqrt(1 - (yy / 2) - (zz / 2) + ((yy * zz) / 3));
+        float Y = y * sqrt(1 - (zz / 2) - (xx / 2) + ((zz * xx) / 3));
+        float Z = z * sqrt(1 - (xx / 2) - (yy / 2) + ((xx * yy) / 3));
+               
+	return float3(X,Y,Z);
+}
+
+float3 getAltitude(float3 pos){
+	return baseRadius;
+}
+
+float3 getNormal(float3 pos){
+	return pos;
+}
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID) {
+	//Setup
+	int i = id.x;
+	int j = id.y;
+	int idx = i + indexingWidth * j;
+
+	float step = 1.0f / (indexingWidth - 1);
+
+	float lx = i * step;
+	float ly = j * step;
+
+	//Calculate spherical position
+	float3 pos = lerp(
+		lerp(topLeft, topRight, lx),
+		lerp(bottomLeft, bottomRight, lx),
+		ly
+	);
+
+	float3 sphere = spherify(pos);
+
+	//Calculate vertice
+	float3 v = sphere * getAltitude(pos);
+	vertices[idx] = v;
+
+	//Calculate normal
+	float3 n = getNormal(pos);
+	normals[idx] = n;
+
+	//Calculate uv
+	float2 uv = lerp(lerp(float2(0,0), float2(1,0), lx), lerp(float2(0,1), float2(1,1), lx), ly);
+	uvs[idx] = uv;
+
+	//Calculate triangles
+	if (i > 0 && j > 0) {
+		int tidx = ((i + (indexingWidth - 1) * j) - (indexingWidth)) * 6;
+
+		triangles[tidx++] = ((i - 1) + indexingWidth * (j - 1));
+		triangles[tidx++] = ((i)+ indexingWidth * (j - 1));
+		triangles[tidx++] = (i + indexingWidth * j);
+
+		triangles[tidx++] = ((i - 1) + indexingWidth * (j - 1));
+		triangles[tidx++] = (i + indexingWidth * j);
+		triangles[tidx++] = ((i - 1) + indexingWidth * (j));
+	}
+}

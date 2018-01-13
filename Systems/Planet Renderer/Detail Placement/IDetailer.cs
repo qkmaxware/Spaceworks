@@ -10,7 +10,7 @@ namespace Spaceworks {
 		/// Shows the chunk details.
 		/// </summary>
 		/// <param name="node">Node.</param>
-		public abstract void ShowChunkDetails (QuadNode<ChunkData> node, float radius, IMeshService meshService);
+		public abstract void ShowChunkDetails (QuadNode<ChunkData> node, Mesh m);
 
 		/// <summary>
 		/// Hides the chunk details.
