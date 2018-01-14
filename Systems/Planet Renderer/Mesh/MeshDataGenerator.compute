@@ -1,5 +1,6 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
+#include "Assets/Spaceworks/Primitives/Noise/Perlin.cginc"
 
 //Input vars
 int indexingWidth; //width of loop
@@ -27,6 +28,20 @@ float3 spherify(float3 pos) {
         float Z = z * sqrt(1 - (xx / 2) - (yy / 2) + ((xx * yy) / 3));
                
 	return float3(X,Y,Z);
+}
+
+float3 getNoise(float3 pos, float offset, int octaves, float frequency, float amplitude, float lacunarity, float persistance) {
+	float total = 0;
+	float maxAmplitude = 0;
+
+	for (int i = 0; i < octaves; i++) {
+		total += perlin((pos + offset) * frequency) * amplitude;
+		maxAmplitude += amplitude;
+		frequency *= lacunarity;
+		amplitude *= persistance;
+	}
+
+	return total;
 }
 
 float3 getAltitude(float3 pos){
@@ -70,16 +85,22 @@ void CSMain (uint3 id : SV_DispatchThreadID) {
 	float2 uv = lerp(lerp(float2(0,0), float2(1,0), lx), lerp(float2(0,1), float2(1,1), lx), ly);
 	uvs[idx] = uv;
 
-	//Calculate triangles
-	if (i > 0 && j > 0) {
-		int tidx = ((i + (indexingWidth - 1) * j) - (indexingWidth)) * 6;
+	//Calculate triangles by performing an "If i > 0 && j > 0 -> calculate triangles"
+	int iGreaterThan0 = clamp(i, 0, 1);
+	int jGreaterThan0 = clamp(j, 0, 1);
+	int ijGreaterThan0 = iGreaterThan0 * jGreaterThan0;
 
-		triangles[tidx++] = ((i - 1) + indexingWidth * (j - 1));
-		triangles[tidx++] = ((i)+ indexingWidth * (j - 1));
-		triangles[tidx++] = (i + indexingWidth * j);
+	i = lerp(1, i, ijGreaterThan0);
+	j = lerp(1, j, ijGreaterThan0);
 
-		triangles[tidx++] = ((i - 1) + indexingWidth * (j - 1));
-		triangles[tidx++] = (i + indexingWidth * j);
-		triangles[tidx++] = ((i - 1) + indexingWidth * (j));
-	}
+	int tidx = ((i + (indexingWidth - 1) * j) - (indexingWidth)) * 6;
+
+	triangles[tidx++] = ((i - 1) + indexingWidth * (j - 1));
+	triangles[tidx++] = ((i)+ indexingWidth * (j - 1));
+	triangles[tidx++] = (i + indexingWidth * j);
+
+	triangles[tidx++] = ((i - 1) + indexingWidth * (j - 1));
+	triangles[tidx++] = (i + indexingWidth * j);
+	triangles[tidx++] = ((i - 1) + indexingWidth * (j));
+	
 }

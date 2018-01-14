@@ -19,17 +19,21 @@ namespace Spaceworks {
 
 		[Header("General")]
 		public string kernelHandle = "CSMain";
-		public ComputeShader shader;
-		public ShaderThreads numthreads;
-		public int resolutionMultipler;
+        public bool useSkirts = false;
+        public string skirtKernelHandle = "CSSecondary";
+        public ComputeShader shader;
+        public ShaderThreads numthreads;
+        public int resolutionMultipler;
 
-		[Header("Input Parameters")]
+        [Header("Input Parameters")]
 		public string arrayWidthParameter = "indexingWidth";
 		public string radiusParameter = "baseRadius";
 		public string topLeftParameter = "topLeft";
 		public string topRightParameter = "topRight";
 		public string bottomLeftParameter = "bottomLeft";
 		public string bottomRightParameter = "bottomRight";
+        public string skirtParameter = "skirtLength";
+        public float skirtLength = 0.99f;
 
 		[Header("Output Parameters")]
 		public string vertexArray = "vertices";
@@ -38,9 +42,12 @@ namespace Spaceworks {
 		public string triangleArray = "triangles";
 
 		private int handle;
+        private int skirtHandle;
 
 		void Start(){
 			handle = shader.FindKernel (kernelHandle);
+            if(useSkirts)
+                skirtHandle = shader.FindKernel(skirtKernelHandle);
 		}
 
 		public float GetAltitude (Vector3 pos, float baseRadius){
@@ -73,8 +80,8 @@ namespace Spaceworks {
 
 			ComputeBuffer vb = new ComputeBuffer (v.Length, 3 * sizeof(float)); //3 floats * 4 bytes / float
 			ComputeBuffer nb = new ComputeBuffer (n.Length, 3 * sizeof(float));
-			ComputeBuffer ub = new ComputeBuffer (n.Length, 2 * sizeof(float));
-			ComputeBuffer tb = new ComputeBuffer (n.Length, sizeof(int));
+			ComputeBuffer ub = new ComputeBuffer (u.Length, 2 * sizeof(float));
+			ComputeBuffer tb = new ComputeBuffer (t.Length, sizeof(int));
 
 			//Transfer data to GPU
 			shader.SetInt(arrayWidthParameter, width);
@@ -84,6 +91,10 @@ namespace Spaceworks {
 			shader.SetVector (bottomLeftParameter, bottomLeft);
 			shader.SetVector (bottomRightParameter, bottomRight);
 
+            if (useSkirts) {
+
+            }
+
 			shader.SetBuffer (handle, vertexArray, vb); 
 			shader.SetBuffer (handle, normalArray, nb);
 			shader.SetBuffer (handle, uvArray, ub);
@@ -91,6 +102,10 @@ namespace Spaceworks {
 
 			//Dispatch the shader
 			shader.Dispatch (handle, width / numthreads.x, width / numthreads.y, 1);
+
+            if (useSkirts) {
+                //shader.Dispatch(skirtHandle, width / numthreads.x, 1, 1);
+            }
 
 			//Retrieve data from GPU
 			vb.GetData (v);
