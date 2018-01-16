@@ -21,8 +21,10 @@ namespace Spaceworks {
 
 			return new Vector3(X, Y, Z);
 		}
-			
-		public abstract Mesh Make (Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, float radius);
+
+        public abstract void Init();
+
+		public abstract MeshData Make (Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, float radius);
 	}
 
 }

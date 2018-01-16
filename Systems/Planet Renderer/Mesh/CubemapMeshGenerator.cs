@@ -141,7 +141,11 @@ namespace Spaceworks{
 			return pos;
 		}
 
-		public override Mesh Make (Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, float radius)
+        public override void Init() {
+
+        }
+
+        public override MeshData Make (Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, float radius)
 		{
 			//Initial Calculations
 			int width = resolution + 2;
@@ -288,15 +292,15 @@ namespace Spaceworks{
 				}
 			}
 
-			Mesh m = new Mesh();
-			m.name = "Surface_r" + resolution;
+            MeshData m = new MeshData();
+            m.name = "Surface_r" + resolution;
 
-			m.vertices = v;
-			m.uv = u;
-			m.triangles = t;
-			m.normals = n;
+            m.vertices = v;
+            m.uvs = u;
+            m.triangles = t;
+            m.normals = n;
 
-			return m;
+            return m;
 		}
 
 	}

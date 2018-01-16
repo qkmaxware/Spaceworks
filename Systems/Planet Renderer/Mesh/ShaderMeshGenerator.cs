@@ -58,7 +58,11 @@ namespace Spaceworks {
 			return pos;
 		}
 
-		public override Mesh Make (Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, float radius){
+        public override void Init(){
+            
+        }
+
+        public override MeshData Make (Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, float radius){
 			//Replace resolution with one matching out shader's threads
 			//Resolution is number of vertices across any axis
 			int resolution = (resolutionMultipler > 1 ? resolutionMultipler : 1) * numthreads.xy; //Ensure multiple of xy
@@ -120,14 +124,15 @@ namespace Spaceworks {
 			tb.Dispose ();
 
             //Create mesh
-            Mesh m = new Mesh ();
-			m.name = "Surface_"+resolution;
-			m.vertices = v;
-			m.normals = n;
-			m.uv = u;
-			m.triangles = t;
+            MeshData m = new MeshData();
+            m.name = "Surface_r" + resolution;
 
-			return m;
+            m.vertices = v;
+            m.uvs = u;
+            m.triangles = t;
+            m.normals = n;
+
+            return m;
 		}
 
 	}

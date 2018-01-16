@@ -31,7 +31,21 @@ namespace Spaceworks {
     }
 
     public class PlanetFace {
-		
+
+        private class PlanetSplitTask : Task {
+            public QuadNode<ChunkData> parent;
+            public MeshData[] meshes = new MeshData[4];
+
+            public PlanetSplitTask(System.Action<Task> fn) : base(fn) { }
+        }
+
+        private class PlanetMergeTask : Task {
+            public QuadNode<ChunkData> node;
+            public MeshData mesh;
+
+            public PlanetMergeTask(System.Action<Task> fn) : base(fn) { }
+        }
+
         public GameObject go { get; private set; }
         public Transform transform { get { return go.transform; } }
 
@@ -53,9 +67,12 @@ namespace Spaceworks {
         //Chunkpooling
         private HashSet<QuadNode<ChunkData>> activeChunks = new HashSet<QuadNode<ChunkData>>();
         private Dictionary<QuadNode<ChunkData>, MeshFilter> chunkMeshMap = new Dictionary<QuadNode<ChunkData>, MeshFilter>();
+        //Threading
+        private Dictionary<QuadNode<ChunkData>, Task> splitTasks = new Dictionary<QuadNode<ChunkData>, Task>();
+        private Dictionary<QuadNode<ChunkData>, Task> mergeTasks = new Dictionary<QuadNode<ChunkData>, Task>();
 
-		//Actionlist
-		private List<System.Action<QuadNode<ChunkData>>> listeners = new List<System.Action<QuadNode<ChunkData>>>();
+        //Actionlist
+        private List<System.Action<QuadNode<ChunkData>>> listeners = new List<System.Action<QuadNode<ChunkData>>>();
 
         public PlanetFace(IMeshService ms, IDetailer ds, float baseRadius, int minDistance, int treeDepth, Range3d range, Material material) {
             //Apply params
@@ -98,6 +115,10 @@ namespace Spaceworks {
             //Deactivate all active LODS
             DiscardAllNodes();
 
+            //Clear all old tasks
+            splitTasks.Clear();
+            mergeTasks.Clear();
+
             //Check which LODS need to be activated
             ShowNode(root, this.activeChunks);
             ForceCheckLod(camera, root);
@@ -115,26 +136,74 @@ namespace Spaceworks {
                 if ((node.isBranch || node.depth < maxDepth) && canSplit(camera, node)) {
                     if (node.isLeaf)
                         Split(node);
-                    DiscardNode(node);
-                    ShowNode(node[Quadrant.NorthEast], ac);
-                    ShowNode(node[Quadrant.NorthWest], ac);
-                    ShowNode(node[Quadrant.SouthEast], ac);
-                    ShowNode(node[Quadrant.SouthWest], ac);
+
+                    //If I already am generating this LOD
+                    if (splitTasks.ContainsKey(node)) {
+                        Task t = splitTasks[node];
+                        if (t.state == TaskStatus.Complete) {
+                            //Can switch to child nodes
+                            DiscardNode(node);
+                            ShowNodeSplit(node, ((PlanetSplitTask)t).meshes, ac);
+                            splitTasks.Remove(node);
+                        }
+                        else {
+                            //Not yet, keep current
+                            ShowNode(node, ac);
+                        }
+                    }
+                    //If I am not yet generating this LOD, keep current
+                    else {
+                        PlanetSplitTask t = new PlanetSplitTask((s) => {
+                            PlanetSplitTask self = (PlanetSplitTask)s;
+
+                            //Generate Meshes
+                            for (int i = 0; i < 4; i++) {
+                                QuadNode<ChunkData> child = self.parent[(Quadrant)i];
+                                MeshData m = meshService.Make(child.range.a, child.range.b, child.range.d, child.range.c, this.radius);
+                                self.meshes[i] = m;
+                            }
+                        });
+                        t.parent = node;
+                        splitTasks[node] = t;
+                        TaskPool.EnqueueInvocation(t);
+                        ShowNode(node, ac);
+                    }
                 } 
                 //Collapse Or Keep Node
                 else {
-                    //Is Root, Cannot Split
-                    if (node.isRoot) {
-                        ShowNode(node, ac);
-                    } 
-                    //Child Wants To Merge But Parent Wants To Split
-                    else if (canSplit(camera, node.parent)) {
+                    //Is Root, Cannot Split OR Child Wants To Merge But Parent Wants To Split
+                    if (node.isRoot || canSplit(camera, node.parent)) {
                         ShowNode(node, ac);
                     } 
                     //Child Wants To Merge And Parent Wants To Be Shown
                     else {
-                        DiscardNode(node);
-                        ShowNode(node.parent, ac);
+                        if (mergeTasks.ContainsKey(node.parent)) {
+                            //Generation already started
+                            Task t = mergeTasks[node.parent];
+                            if (t.state == TaskStatus.Complete) {
+                                //Generation is complete, show parent
+                                DiscardNode(node);
+                                ShowNodeMerge(node.parent, ((PlanetMergeTask)t).mesh, ac);
+                                mergeTasks.Remove(node.parent);
+                            }
+                            else {
+                                //Generation is not complete, keep node
+                                ShowNode(node, ac);
+                            }
+                        }
+                        else if(!ac.Contains(node.parent)){
+                            //No generation started, keep node, start generation
+                            PlanetMergeTask t = new PlanetMergeTask((s) => {
+                                PlanetMergeTask self = (PlanetMergeTask)s;
+
+                                MeshData m = meshService.Make(self.node.range.a, self.node.range.b, self.node.range.d, self.node.range.c, this.radius);
+                                self.mesh = m;
+                            });
+                            t.node = node.parent;
+                            mergeTasks[node.parent] = t;
+                            TaskPool.EnqueueInvocation(t);
+                            ShowNode(node, ac);
+                        }
                     }
                 }
             }
@@ -218,6 +287,120 @@ namespace Spaceworks {
             activeChunks.Clear();
         }
 
+        private void ShowNodeMerge(QuadNode<ChunkData> node, MeshData mesh, HashSet<QuadNode<ChunkData>> activeList) {
+
+              if (!chunkMeshMap.ContainsKey(node)) {
+                  //Buffer
+                  while (meshPool.Count < 3) {
+                      GameObject g = new GameObject("Chunk");
+                      g.transform.SetParent(go.transform);
+                      g.transform.localPosition = Vector3.zero;
+
+                      MeshFilter meshFilter = g.AddComponent<MeshFilter>();
+                      Mesh m = new Mesh();
+                      m.name = "Cached Chunk Mesh";
+                      meshFilter.sharedMesh = m;
+
+                      MeshRenderer meshRenderer = g.AddComponent<MeshRenderer>();
+                      meshRenderer.sharedMaterial = this.material;
+                      g.SetActive(false);
+
+                      meshPool.Enqueue(meshFilter);
+                  }
+
+                  MeshFilter filter = meshPool.Dequeue();
+                  filter.sharedMesh = mesh.mesh;
+
+                  if (node.value.bounds == null) {
+                      node.value.bounds = new Sphere(Vector3.zero, 1);
+                      node.value.bounds.center = filter.sharedMesh.bounds.center;
+                      node.value.bounds.radius = Mathf.Sqrt(
+                          filter.sharedMesh.bounds.extents.x * filter.sharedMesh.bounds.extents.x +
+                          filter.sharedMesh.bounds.extents.y * filter.sharedMesh.bounds.extents.y +
+                          filter.sharedMesh.bounds.extents.z * filter.sharedMesh.bounds.extents.z
+                      );
+                  }
+
+                  //Show node
+                  filter.gameObject.SetActive(true);
+
+                  //Call highest detail action
+                  if (node.depth == this.maxDepth) {
+                      //Call listeners if exists
+                      foreach (System.Action<QuadNode<ChunkData>> fn in this.listeners) {
+                          fn.Invoke(node);
+                      }
+                      //Call detailing service if available
+                      if (detailService != null)
+                          detailService.ShowChunkDetails(node, filter.sharedMesh);
+                  }
+
+                  //Add me if I don't already exist
+                  this.activeMeshes.Add(filter);
+                  this.chunkMeshMap[node] = filter;
+              }
+              if (!activeList.Contains(node))
+                  activeList.Add(node);
+        }
+
+        private void ShowNodeSplit(QuadNode<ChunkData> parent, MeshData[] meshes, HashSet<QuadNode<ChunkData>> activeList) {
+            for (int i = 0; i < 4; i++) {
+                QuadNode<ChunkData> child = parent[(Quadrant)i];
+                if (!chunkMeshMap.ContainsKey(child)) {
+                    //Buffer
+                    while (meshPool.Count < 3) {
+                        GameObject g = new GameObject("Chunk");
+                        g.transform.SetParent(go.transform);
+                        g.transform.localPosition = Vector3.zero;
+
+                        MeshFilter meshFilter = g.AddComponent<MeshFilter>();
+                        Mesh m = new Mesh();
+                        m.name = "Cached Chunk Mesh";
+                        meshFilter.sharedMesh = m;
+
+                        MeshRenderer meshRenderer = g.AddComponent<MeshRenderer>();
+                        meshRenderer.sharedMaterial = this.material;
+                        g.SetActive(false);
+
+                        meshPool.Enqueue(meshFilter);
+                    }
+
+                    MeshFilter filter = meshPool.Dequeue();
+                    filter.sharedMesh = meshes[i].mesh;
+
+                    if (child.value.bounds == null) {
+                        child.value.bounds = new Sphere(Vector3.zero, 1);
+                        child.value.bounds.center = filter.sharedMesh.bounds.center;
+                        child.value.bounds.radius = Mathf.Sqrt(
+                            filter.sharedMesh.bounds.extents.x * filter.sharedMesh.bounds.extents.x +
+                            filter.sharedMesh.bounds.extents.y * filter.sharedMesh.bounds.extents.y +
+                            filter.sharedMesh.bounds.extents.z * filter.sharedMesh.bounds.extents.z
+                        );
+                    }
+
+                    //Show node
+                    filter.gameObject.SetActive(true);
+
+                    //Call highest detail action
+                    if (child.depth == this.maxDepth) {
+                        //Call listeners if exists
+                        foreach (System.Action<QuadNode<ChunkData>> fn in this.listeners) {
+                            fn.Invoke(child);
+                        }
+                        //Call detailing service if available
+                        if (detailService != null)
+                            detailService.ShowChunkDetails(child, filter.sharedMesh);
+                    }
+
+                    //Add me if I don't already exist
+                    this.activeMeshes.Add(filter);
+                    this.chunkMeshMap[child] = filter;
+                }
+                if (!activeList.Contains(child))
+                    activeList.Add(child);
+            }
+        }
+
         private void ShowNode(QuadNode<ChunkData> node, HashSet<QuadNode<ChunkData>> activeList) {
             if (!chunkMeshMap.ContainsKey(node)) {
                 //Buffer
@@ -241,7 +424,7 @@ namespace Spaceworks {
                 MeshFilter filter = meshPool.Dequeue();
 
                 //Populate mesh
-				filter.sharedMesh = meshService.Make(node.range.a, node.range.b, node.range.d, node.range.c, this.radius);
+				filter.sharedMesh = meshService.Make(node.range.a, node.range.b, node.range.d, node.range.c, this.radius).mesh;
 				//filter.sharedMesh = SubPlane.Make(node.range.a, node.range.b, node.range.d, node.range.c, resolution); 
 
 				//Set chunk data if it was never computed before
@@ -320,6 +503,7 @@ namespace Spaceworks {
 
         public Planet(PlanetConfig config) {
             this.config = config;
+            
         }
 
         /// <summary>
@@ -369,7 +553,10 @@ namespace Spaceworks {
             Range3d rightRange = new Range3d(new Vector3(rad, rad, -rad), new Vector3(rad, rad, rad), new Vector3(rad, -rad, rad), new Vector3(rad, -rad, -rad));
             Range3d leftRange = new Range3d(new Vector3(-rad, rad, rad), new Vector3(-rad, rad, -rad), new Vector3(-rad, -rad, -rad), new Vector3(-rad, -rad, rad));
 
-			UpdateMaterial (go, true);
+            if (config.generationService)
+                config.generationService.Init();
+
+            UpdateMaterial (go, true);
 
 			this.topFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, topRange, config.material);
 			this.topFace.go.name = "Top";

@@ -1,6 +1,6 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
-#include "Assets/Spaceworks/Primitives/Noise/Perlin.cginc"
+#pragma kernel CSSecondary
 
 //Input vars
 int indexingWidth; //width of loop
@@ -30,21 +30,7 @@ float3 spherify(float3 pos) {
 	return float3(X,Y,Z);
 }
 
-float3 getNoise(float3 pos, float offset, int octaves, float frequency, float amplitude, float lacunarity, float persistance) {
-	float total = 0;
-	float maxAmplitude = 0;
-
-	for (int i = 0; i < octaves; i++) {
-		total += perlin((pos + offset) * frequency) * amplitude;
-		maxAmplitude += amplitude;
-		frequency *= lacunarity;
-		amplitude *= persistance;
-	}
-
-	return total;
-}
-
-float3 getAltitude(float3 pos){
+float getAltitude(float3 pos){
 	return baseRadius;
 }
 
@@ -74,11 +60,11 @@ void CSMain (uint3 id : SV_DispatchThreadID) {
 	float3 sphere = spherify(pos);
 
 	//Calculate vertice
-	float3 v = sphere * getAltitude(pos);
+	float3 v = sphere * getAltitude(sphere);
 	vertices[idx] = v;
 
 	//Calculate normal
-	float3 n = getNormal(pos);
+	float3 n = getNormal(sphere);
 	normals[idx] = n;
 
 	//Calculate uv
@@ -103,4 +89,9 @@ void CSMain (uint3 id : SV_DispatchThreadID) {
 	triangles[tidx++] = (i + indexingWidth * j);
 	triangles[tidx++] = ((i - 1) + indexingWidth * (j));
 	
+}
+
+[numthreads(8, 1, 1)]
+void CSSecondary(uint3 id : SV_DispatchThreadID) {
+
 }

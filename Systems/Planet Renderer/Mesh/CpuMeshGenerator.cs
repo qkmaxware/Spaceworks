@@ -92,7 +92,11 @@ namespace Spaceworks {
 			return normal;
 		}
 
-		public override Mesh Make(Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, float radius){
+        public override void Init() {
+
+        }
+
+        public override MeshData Make(Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, float radius){
 			//Initial Calculations
 			int width = resolution + 2;
 			int size = width * width;
@@ -238,11 +242,11 @@ namespace Spaceworks {
 				}
 			}
 
-			Mesh m = new Mesh();
+			MeshData m = new MeshData();
 			m.name = "Surface_r" + resolution;
 
 			m.vertices = v;
-			m.uv = u;
+			m.uvs = u;
 			m.triangles = t;
 			m.normals = n;
 
