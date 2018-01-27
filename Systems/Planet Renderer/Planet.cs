@@ -182,7 +182,10 @@ namespace Spaceworks {
                             Task t = mergeTasks[node.parent];
                             if (t.state == TaskStatus.Complete) {
                                 //Generation is complete, show parent
-                                DiscardNode(node);
+                                DiscardNode(node.parent[Quadrant.NorthEast]);
+                                DiscardNode(node.parent[Quadrant.SouthEast]);
+                                DiscardNode(node.parent[Quadrant.NorthWest]);
+                                DiscardNode(node.parent[Quadrant.SouthWest]);
                                 ShowNodeMerge(node.parent, ((PlanetMergeTask)t).mesh, ac);
                                 mergeTasks.Remove(node.parent);
                             }

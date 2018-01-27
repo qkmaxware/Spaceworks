@@ -93,7 +93,7 @@ namespace Spaceworks {
         /// <param name="x">The x coordinate.</param>
         /// <param name="y">The y coordinate.</param>
         /// <param name="z">The z coordinate.</param>
-        private static double Noise(double x, double y, double z) {
+        public static double Noise(double x, double y, double z) {
             int X = fastfloor(x) & 255;
             int Y = fastfloor(y) & 255;
             int Z = fastfloor(z) & 255;

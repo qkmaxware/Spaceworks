@@ -64,6 +64,8 @@ namespace Spaceworks {
         private HeightField h_front;
         private HeightField h_back;
 
+        private static Perlin perlin = new Perlin();
+
         /// <summary>
         /// Create HeightFields from textures
         /// </summary>
@@ -237,7 +239,10 @@ namespace Spaceworks {
         /// <param name="baseRadius"></param>
         /// <returns></returns>
 		public float GetAltitude (Vector3 pos, float baseRadius){
-			return Mathf.Lerp(range.low, range.high, SampleHeightmap (pos)) + baseRadius;
+            //Sample cubemap and add a small random value
+            float sampled = Mathf.Lerp(range.low, range.high, SampleHeightmap(pos)) + baseRadius;
+            float rng = 0.5f * perlin.Value(pos, 18f);
+            return sampled + rng;
 		}
 
         /// <summary>
@@ -247,7 +252,7 @@ namespace Spaceworks {
         /// <param name="baseRadius"></param>
         /// <returns></returns>
 		public Vector3 GetNormal(Vector3 pos, float baseRadius){
-			return pos;
+            return pos;
 		}
 
         /// <summary>
