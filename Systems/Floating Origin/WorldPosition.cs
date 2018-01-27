@@ -16,6 +16,23 @@ namespace Spaceworks {
         public static readonly WorldPosition zero = new WorldPosition();
 
         public WorldPosition() {}
+        public WorldPosition(double x, double y, double z) : this() {
+            long deltaSector;
+
+            deltaSector = (long)(x / defaultSectorSize.x);
+            x -= defaultSectorSize.x * deltaSector;
+            sector.x += deltaSector;
+
+            deltaSector = (long)(y / defaultSectorSize.y);
+            y -= defaultSectorSize.y * deltaSector;
+            sector.y += deltaSector;
+
+            deltaSector = (long)(z / defaultSectorSize.z);
+            z -= defaultSectorSize.z * deltaSector;
+            sector.z += deltaSector;
+
+            this.sectorOffset = new Vector3((float)x, (float)y, (float)z);
+        }
         public WorldPosition(float x, float y, float z) : this(){
             this.sectorOffset = new Vector3(x, y, z);
             ForceSectorUpdate();

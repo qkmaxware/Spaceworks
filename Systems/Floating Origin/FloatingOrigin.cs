@@ -9,7 +9,7 @@ namespace Spaceworks {
         private static FloatingOrigin instance;
 
         private List<FloatingTransform> monitored = new List<FloatingTransform>();
-		private WorldPosition _center = new WorldPosition();
+		private WorldPosition _center = WorldPosition.zero;
 		public WorldPosition sceneCenter {
 			get{ 
 				return _center;
@@ -21,7 +21,7 @@ namespace Spaceworks {
 
 		public static WorldPosition center {
 			get { 
-				return instance ? instance.sceneCenter : new WorldPosition();
+				return instance ? instance.sceneCenter : WorldPosition.zero;
 			}
 		}
 

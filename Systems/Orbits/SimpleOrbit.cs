@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Spaceworks {
 
-    public class SimpleOrbit : MonoBehaviour {
+    public class SimpleOrbit : FloatingTransform {
 
         public enum FocalPoint {
             NegativeMajorAxis, PositiveMajorAxis
@@ -28,8 +28,15 @@ namespace Spaceworks {
             }
         }
 
+        private float unitB {
+            get {
+                return Mathf.Sqrt(1 - eccentricity * eccentricity);
+            }
+        }
+
         [Header("Ellipse Positioning")]
         public FocalPoint focusPoint = FocalPoint.NegativeMajorAxis;
+        public FloatingTransform floatingFocusObject;
         public Transform focusObject;
 
         [Header("Body Parameters")]
@@ -75,17 +82,71 @@ namespace Spaceworks {
             }
         }
 
-        void Start() {
+        new void Start() {
+            base.Start();
             _position = this.startPosition;
-            this.transform.position = Evaluate(_position);
-            _position = Mathf.Repeat(_position, 2 * Mathf.PI);
+            Move(0);
         }
 
         void Update() {
-            _position += this.orbitalVelocity * Time.deltaTime;
-            this.transform.position = Evaluate(_position);
+            Move(this.orbitalVelocity * Time.deltaTime);
         }
 
+        void Move(float delta) {
+            _position = Mathf.Repeat(_position + delta, 2 * Mathf.PI);
+            if (floatingFocusObject) {
+                this.SetWorldPosition(EvaluateFloating(_position));
+            }
+            else {
+                this.transform.position = Evaluate(_position);
+            }
+        }
+
+        /// <summary>
+        /// Evaluate in higher precision for use with floating origin solution
+        /// </summary>
+        /// <param name="f"></param>
+        /// <returns></returns>
+        public WorldPosition EvaluateFloating(float f) {
+            f = Mathf.Repeat(f, 2 * Mathf.PI);
+
+            //Cache rotation
+            if (savedRotation != rotation) {
+                savedRotation = rotation;
+                _rot = Quaternion.Euler(savedRotation);
+            }
+
+            //Get location on "unit sphere"
+            Vector3 location = new Vector3(
+                Mathf.Cos(f),
+                0,
+                unitB * Mathf.Sin(f)
+            );
+
+            //Get location in double precision
+            double realX = a * System.Math.Cos(f);
+            double realZ = b * System.Math.Sin(f);
+            double distance = System.Math.Sqrt(realX * realX + realZ * realZ);
+
+            //Compute distance to center of ellipse in double precision
+            double centerDist = System.Math.Sqrt(a * a - b * b);
+
+            //Create the direction to the point in space
+            Vector3 dir = _rot * ((focusPoint == FocalPoint.NegativeMajorAxis) ? new Vector3(1, 0, 0) : new Vector3(-1, 0, 0));
+            Vector3 localUnitPos = (_rot * location);
+
+            //Create the world position by scaling up and moving the local precision values
+            WorldPosition localPos = new WorldPosition(localUnitPos.x * distance, localUnitPos.y * distance, localUnitPos.z * distance);
+            WorldPosition worldPos = (floatingFocusObject.worldPosition + new WorldPosition(centerDist * dir.x, centerDist * dir.y, centerDist * dir.z)) + localPos;
+
+            return worldPos;
+        }
+
+        /// <summary>
+        /// Evaluate in UNITY standard coordinate system
+        /// </summary>
+        /// <param name="f"></param>
+        /// <returns></returns>
         public Vector3 Evaluate(float f) {
             f = Mathf.Repeat(f, 2 * Mathf.PI);
 
@@ -121,6 +182,9 @@ namespace Spaceworks {
         }
 
         public void OnDrawGizmos() {
+            if (focusObject == null)
+                return;
+
             Gizmos.color = Color.white;
 
             Vector3[] points = GetPoints(24);
@@ -135,12 +199,14 @@ namespace Spaceworks {
             Gizmos.DrawLine(focusObject.position, Evaluate(0));
 
             Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(Evaluate(startPosition), 0.3f);
+            float radius = a * 0.1f;
+            Gizmos.DrawWireSphere(Evaluate(startPosition), radius);
 
             Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(focusNegative, 0.2f);
-            Gizmos.DrawWireSphere(focusPositive, 0.2f);
-            Gizmos.DrawWireSphere(center, 0.2f);
+            radius = a * 0.05f;
+            Gizmos.DrawWireSphere(focusNegative, radius);
+            Gizmos.DrawWireSphere(focusPositive, radius);
+            Gizmos.DrawWireSphere(center, radius);
         }
 
     }

@@ -2,12 +2,42 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Spaceworks{
+namespace Spaceworks {
+
+    public class HeightField {
+
+        private float[] heightmap;
+
+        public int width {
+            get; private set;
+        }
+
+        public int height {
+            get; private set;
+        }
+
+        public float this[int x, int y] {
+            get {
+                return heightmap[x + width * y];
+            }
+            set {
+                heightmap[x + width * y] = value;
+            }
+        }
+
+        public HeightField(int width, int height) {
+            this.width = Mathf.Max(1, width);
+            this.height = Mathf.Max(1, height);
+
+            heightmap = new float[this.width * this.height];
+        }
+
+    }
 
 	public class CubemapMeshGenerator : IMeshService {
 
 		public enum ColourComponent{
-			Red, Green, Blue, Alpha
+			Red, Green, Blue, Alpha, Luminosity
 		}
 
 		[Header("Mesh Settings")]
@@ -26,7 +56,71 @@ namespace Spaceworks{
 		public Texture2D heightmapBack;
 		public ColourComponent heightColour;
 
-		private float SampleColour(Color colour){
+        //Internal calculated heightfields
+        private HeightField h_top;
+        private HeightField h_bottom;
+        private HeightField h_left;
+        private HeightField h_right;
+        private HeightField h_front;
+        private HeightField h_back;
+
+        /// <summary>
+        /// Create HeightFields from textures
+        /// </summary>
+        private void GenerateHeightFields(bool force = false) {
+            if (!force && h_top != null)
+                return;
+
+            Texture2D[] maps = new Texture2D[] {
+                heightmapTop,
+                heightmapBottom,
+                heightmapLeft,
+                heightmapRight,
+                heightmapFront,
+                heightmapBack
+            };
+            
+            for (int i = 0; i < 6; i++) {
+                Texture2D map = maps[i];
+                HeightField field = new HeightField(map.width, map.height);
+
+                for (int w = 0; w < map.width; w++) {
+                    for (int h = 0; h < map.height; h++) {
+                        field[w, h] = SampleColour(map.GetPixel(w,h));
+                    }
+                }
+
+                switch (i) {
+                    case 0:
+                        h_top = field;
+                        break;
+                    case 1:
+                        h_bottom = field;
+                        break;
+                    case 2:
+                        h_left = field;
+                        break;
+                    case 3:
+                        h_right = field;
+                        break;
+                    case 4:
+                        h_front = field;
+                        break;
+                    case 5:
+                        h_back = field;
+                        break;
+                }
+                
+            }
+
+        }
+
+        /// <summary>
+        /// Sampel a height from a colour
+        /// </summary>
+        /// <param name="colour"></param>
+        /// <returns></returns>
+        private float SampleColour(Color colour){
 			switch (heightColour) {
 				case ColourComponent.Alpha:
 					return colour.a;
@@ -34,13 +128,22 @@ namespace Spaceworks{
 					return colour.b;
 				case ColourComponent.Green:
 					return colour.g;
+                case ColourComponent.Luminosity:
+                    return 0.21f * colour.r + 0.72f * colour.g + 0.07f * colour.b;
 				default:
 					return colour.r;
 			}
 		}
 
+        /// <summary>
+        /// Sample one of the 6 heightfields at the given position
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <returns></returns>
 		private float SampleHeightmap(Vector3 pos){
-			pos = new Vector3 (Mathf.Clamp (pos.x, -1, 1), Mathf.Clamp (pos.y, -1, 1), Mathf.Clamp (pos.z, -1, 1));
+            GenerateHeightFields();
+
+            pos = new Vector3 (Mathf.Clamp (pos.x, -1, 1), Mathf.Clamp (pos.y, -1, 1), Mathf.Clamp (pos.z, -1, 1));
 			float dot = float.MinValue;
 			CubemapFace face = CubemapFace.PositiveX;
 
@@ -86,65 +189,83 @@ namespace Spaceworks{
 			switch(face){
 				//Right
 				case CubemapFace.PositiveX:
-					float x = ((pos.z + 1) * 0.5f) * heightmapRight.width;
-					float y = ((pos.y + 1) * 0.5f) * heightmapRight.height;
-					Color c = heightmapRight.GetPixel ((int)x, (int)y);
-					value = SampleColour (c);
+					float x = ((pos.z + 1) * 0.5f) * (h_right.width - 1);
+					float y = ((pos.y + 1) * 0.5f) * (h_right.height - 1);
+                    value = h_right[(int)x, (int)y];
 					break;
 				//Left
 				case CubemapFace.NegativeX:
-					x = (1 - (pos.z + 1) * 0.5f) * heightmapLeft.width;
-					y = ((pos.y + 1) * 0.5f) * heightmapLeft.height;
-					c = heightmapLeft.GetPixel ((int)x, (int)y);
-					value = SampleColour (c);
-					break;
+					x = (1 - (pos.z + 1) * 0.5f) * (h_left.width - 1);
+					y = ((pos.y + 1) * 0.5f) * (h_left.height - 1);
+                    value = h_left[(int)x, (int)y];
+                    break;
 
 				//Up
 				case CubemapFace.PositiveY:
-					x = ((pos.x + 1) * 0.5f) * heightmapTop.width;
-					y = (1 - (pos.z + 1) * 0.5f) * heightmapTop.height;
-					c = heightmapTop.GetPixel ((int)x, (int)y);
-					value = SampleColour (c);
-					break;
+					x = ((pos.x + 1) * 0.5f) * (h_top.width - 1);
+					y = (1 - (pos.z + 1) * 0.5f) * (h_top.height - 1);
+                    value = h_top[(int)x, (int)y];
+                    break;
 				//Down
 				case CubemapFace.NegativeY:
-					x = ((pos.x + 1) * 0.5f) * heightmapBottom.width;
-					y = ((pos.z + 1) * 0.5f) * heightmapBottom.height;
-					c = heightmapBottom.GetPixel ((int)x, (int)y);
-					value = SampleColour (c);
-					break;
+					x = ((pos.x + 1) * 0.5f) * (h_bottom.width - 1);
+					y = ((pos.z + 1) * 0.5f) * (h_bottom.height - 1);
+                    value = h_bottom[(int)x, (int)y];
+                    break;
 
 				//Forward
 				case CubemapFace.PositiveZ:
-					x = (1 - (pos.x + 1) * 0.5f) * heightmapFront.width;
-					y = ((pos.y + 1) * 0.5f) * heightmapFront.height;
-					c = heightmapFront.GetPixel ((int)x, (int)y);
-					value = SampleColour (c);
-					break;
+					x = (1 - (pos.x + 1) * 0.5f) * (h_front.width - 1);
+					y = ((pos.y + 1) * 0.5f) * (h_front.height - 1);
+                    value = h_front[(int)x, (int)y];
+                    break;
 				//Back
 				case CubemapFace.NegativeZ:
-					x = ((pos.x + 1) * 0.5f) * heightmapBack.width;
-					y = ((pos.y + 1) * 0.5f) * heightmapBack.height;
-					c = heightmapBack.GetPixel ((int)x, (int)y);
-					value = SampleColour (c);
-					break;
+					x = ((pos.x + 1) * 0.5f) * (h_back.width - 1);
+					y = ((pos.y + 1) * 0.5f) * (h_back.height - 1);
+                    value = h_back[(int)x, (int)y];
+                    break;
 			}
 
 			return value;
 		}
 
+        /// <summary>
+        /// Get the height of the planet at a certain point
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <param name="baseRadius"></param>
+        /// <returns></returns>
 		public float GetAltitude (Vector3 pos, float baseRadius){
 			return Mathf.Lerp(range.low, range.high, SampleHeightmap (pos)) + baseRadius;
 		}
 
+        /// <summary>
+        /// Get the normal of the planet at a certain point
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <param name="baseRadius"></param>
+        /// <returns></returns>
 		public Vector3 GetNormal(Vector3 pos, float baseRadius){
 			return pos;
 		}
 
+        /// <summary>
+        /// Initialize service
+        /// </summary>
         public override void Init() {
-
+            GenerateHeightFields();
         }
 
+        /// <summary>
+        /// Make mesh
+        /// </summary>
+        /// <param name="topLeft"></param>
+        /// <param name="topRight"></param>
+        /// <param name="bottomLeft"></param>
+        /// <param name="bottomRight"></param>
+        /// <param name="radius"></param>
+        /// <returns></returns>
         public override MeshData Make (Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, float radius)
 		{
 			//Initial Calculations
@@ -176,16 +297,18 @@ namespace Spaceworks{
 				for (int j = 0; j < width; j++) {
 					int idx = i + width * j;
 
-					//Create Vertice on Cube
+					//Create Vertice on Unit Cube
 					Vector3 rawPosition = Vector3.Lerp(
 						Vector3.Lerp(topLeft, topRight, i * step),
 						Vector3.Lerp(bottomLeft, bottomRight, i * step),
 						j * step
 					);
+
+                    //Transform Vertice to Unit Sphere
 					Vector3 pos = IMeshService.Spherify(rawPosition);
 
 					//Sample Noise to Get Altitude
-					float alt = GetAltitude(pos, radius);
+					float alt = GetAltitude(rawPosition, radius);
 
 					v [idx] = pos * alt;
 

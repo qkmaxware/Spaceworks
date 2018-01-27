@@ -30,9 +30,14 @@ namespace Spaceworks {
 			set;
 		}
 
+        private WorldPosition _local = WorldPosition.zero;
 		public WorldPosition localPosition {
-			get;
-			set;
+            get {
+                return _local;
+            }
+            set {
+                _local = value;
+            }
 		}
 
 		public WorldPosition worldPosition {
