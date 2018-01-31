@@ -13,13 +13,21 @@ namespace Spaceworks {
 
 		void Start(){
 			SolarSystem s = new SolarSystem (config);
-			generatedPlanets = s.Render ();
+			generatedPlanets = s.RenderOn (this.gameObject);
 			generatedSystem = s;
+
+            foreach(Planet p in generatedPlanets) {
+                p.ForceUpdateLODs(Camera.main.transform.position);
+            }
+
+            this.name = this.name + ": " + config.name;
 		}
 
 		void Update(){
-			
-		}
+            foreach (Planet p in generatedPlanets) {
+                p.UpdateLODs(Camera.main.transform.position);
+            }
+        }
 	}
 
 }

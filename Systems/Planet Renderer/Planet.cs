@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 
+using Spaceworks.Threading;
+
 namespace Spaceworks {
 
     [System.Serializable]
@@ -120,7 +122,6 @@ namespace Spaceworks {
             mergeTasks.Clear();
 
             //Check which LODS need to be activated
-            ShowNode(root, this.activeChunks);
             ForceCheckLod(camera, root);
         }
 
@@ -222,6 +223,7 @@ namespace Spaceworks {
         /// <param name="node"></param>
         private void ForceCheckLod(Vector3 camera, QuadNode<ChunkData> node) {
             //I need to go deeper
+            DiscardNode(node);
             if ((node.isBranch || node.depth < maxDepth) && canSplit(camera, node)) {
                 if (node.isLeaf)
                     Split(node);
@@ -495,7 +497,7 @@ namespace Spaceworks {
 
     public class Planet {
 
-        private PlanetConfig config;
+        public PlanetConfig config { get; private set; }
 
         public PlanetFace topFace { get; private set; }
         public PlanetFace bottomFace { get; private set; }

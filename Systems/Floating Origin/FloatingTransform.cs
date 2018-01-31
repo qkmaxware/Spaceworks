@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Spaceworks {
+namespace Spaceworks.Position {
 
     public class FloatingTransform : MonoBehaviour {
 
@@ -84,6 +84,9 @@ namespace Spaceworks {
 			UpdateUnityPosition (sceneCenter);
         }
 
+        public override string ToString() {
+            return this.name + " - " + this.worldPosition.ToString();
+        }
     }
 
 }

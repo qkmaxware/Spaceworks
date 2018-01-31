@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Spaceworks {
+namespace Spaceworks.Position {
 
     [System.Serializable]
     public class WorldPosition : IEquatable<WorldPosition> {
@@ -15,7 +15,10 @@ namespace Spaceworks {
 
         public static readonly WorldPosition zero = new WorldPosition();
 
-        public WorldPosition() {}
+        public WorldPosition() {
+            this.sectorOffset = new Vector3(0, 0, 0);
+            this.sector = new Long3(0, 0, 0);
+        }
         public WorldPosition(double x, double y, double z) : this() {
             long deltaSector;
 
@@ -183,7 +186,7 @@ namespace Spaceworks {
 
         public override string ToString() {
             //{1 : 0.004}, {1 : 12.0}, {1 : 100}
-            return string.Format("{{0} : {1}},{{2} : {3}},{{4} : {5}}", this.sector.x.ToString(), this.sectorOffset.x.ToString(), this.sector.y.ToString(), this.sectorOffset.y.ToString(), this.sector.z.ToString(), this.sectorOffset.z.ToString());
+            return string.Format("[{0} : {1}],[{2} : {3}],[{4} : {5}]", this.sector.x.ToString(), this.sectorOffset.x.ToString(), this.sector.y.ToString(), this.sectorOffset.y.ToString(), this.sector.z.ToString(), this.sectorOffset.z.ToString());
         }
 
     }

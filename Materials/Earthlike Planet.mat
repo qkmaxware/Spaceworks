@@ -95,7 +95,7 @@ Material:
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:
-    - _Center: {r: -5000, g: -36000, b: 50000, a: 0}
+    - _Center: {r: 10000, g: 0, b: 0, a: 0}
     - _CliffColour: {r: 0.36764705, g: 0.36764705, b: 0.36764705, a: 1}
     - _Color: {r: 0.37000355, g: 0.5147059, b: 0.1400303, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}

@@ -47,7 +47,7 @@ namespace Spaceworks {
 		public float skirtSize = 0.9f;
 		public HighLowPair range;
 
-		[Header("Heightmaps Settings")]
+		[Header("Heightmap Settings")]
 		public Texture2D heightmapTop;
 		public Texture2D heightmapBottom;
 		public Texture2D heightmapLeft;
@@ -241,7 +241,7 @@ namespace Spaceworks {
 		public float GetAltitude (Vector3 pos, float baseRadius){
             //Sample cubemap and add a small random value
             float sampled = Mathf.Lerp(range.low, range.high, SampleHeightmap(pos)) + baseRadius;
-            float rng = 0.5f * perlin.Value(pos, 18f);
+            float rng = 0.25f * perlin.Value(pos, 18f);
             return sampled + rng;
 		}
 
@@ -252,8 +252,22 @@ namespace Spaceworks {
         /// <param name="baseRadius"></param>
         /// <returns></returns>
 		public Vector3 GetNormal(Vector3 pos, float baseRadius){
-            return pos;
-		}
+            float e = 0.001f; //Some small value
+            Vector3 p = IMeshService.Spherify(pos);
+            Vector3 p1 = new Vector3(pos.x + e, pos.y, pos.z);
+            Vector3 p2 = new Vector3(pos.x, pos.y + e, pos.z);
+            Vector3 p3 = new Vector3(pos.x, pos.y, pos.z + e);
+
+            Vector3 a = p * SampleHeightmap(pos);
+            Vector3 b = IMeshService.Spherify(p1) * SampleHeightmap(p1);
+            Vector3 c = IMeshService.Spherify(p2) * SampleHeightmap(p2);
+            Vector3 d = IMeshService.Spherify(p3) * SampleHeightmap(p3);
+
+            Vector3 delta = (b - a) + (c - a) + (d - a);
+            Vector3 normal = delta - p * Vector3.Dot(delta, p) + p;
+
+            return normal.normalized;
+        }
 
         /// <summary>
         /// Initialize service
@@ -327,7 +341,7 @@ namespace Spaceworks {
 
 					//Create Normals
 					//TODO take terrain shape into account
-					n[idx] = GetNormal(pos, radius);
+					n[idx] = GetNormal(rawPosition, radius);
 
 					//Create Triangles
 					if (i > 0 && j > 0) {

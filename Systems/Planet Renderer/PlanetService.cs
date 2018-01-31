@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+using Spaceworks.Position;
+
 namespace Spaceworks {
 
 	public class PlanetService : FloatingTransform {
@@ -23,6 +25,8 @@ namespace Spaceworks {
 
             //Render the levels of details for the initial camera position (slow)
             p.ForceUpdateLODs(Camera.main.transform.position);
+
+            this.name = this.name + ": " + this.config.name;
         }
 
         // Update is called once per frame

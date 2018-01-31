@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Spaceworks {
+namespace Spaceworks.Position {
 
     public class FloatingOrigin : MonoBehaviour {
 
@@ -60,17 +60,16 @@ namespace Spaceworks {
         void Update() {
             if (!foci)
                 return;
-
+            
             if (foci.transform.position.sqrMagnitude > bufferDistance * bufferDistance) {
                 WorldPosition delta = new WorldPosition(foci.transform.position).SectorOnly();
-                sceneCenter += delta;
+                this.sceneCenter += delta;
                 foci.transform.position -= delta.ToVector3();
 
                 foreach (FloatingTransform tr in monitored) {
-                    tr.OnOriginChange(sceneCenter);
+                    tr.OnOriginChange(this.sceneCenter);
                 }
             }
-
         }
 
     }

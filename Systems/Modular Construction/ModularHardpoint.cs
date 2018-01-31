@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Spaceworks {
+namespace Spaceworks.Modular {
 
     public class ModularHardpoint : MonoBehaviour {
 

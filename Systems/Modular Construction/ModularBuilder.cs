@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Spaceworks {
+namespace Spaceworks.Modular {
 
     public class ModularBuilder : MonoBehaviour {
 
@@ -30,7 +30,7 @@ namespace Spaceworks {
         }
 
         private void TryPlace() {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            Ray ray = UnityEngine.Camera.main.ScreenPointToRay(Input.mousePosition);
 
             //Move to temporary position
             if (objectOutline)

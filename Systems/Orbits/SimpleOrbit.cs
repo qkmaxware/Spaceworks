@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Spaceworks {
+using Spaceworks.Position;
+
+namespace Spaceworks.Orbits {
 
     public class SimpleOrbit : FloatingTransform {
 
