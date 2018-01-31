@@ -6,6 +6,9 @@ using System;
 
 namespace Spaceworks.Orbits.Kepler {
 
+    /// <summary>
+    /// Class for utlities for kepler calculations
+    /// </summary>
     public class KeplerUtils {
 
         /// <summary>
@@ -172,6 +175,9 @@ namespace Spaceworks.Orbits.Kepler {
 
     }
 
+    /// <summary>
+    /// Class for storing required parameters to create keplerian orbits
+    /// </summary>
     [System.Serializable]
     public class KeplerOrbitalParameters {
         /// <summary>
@@ -220,24 +226,61 @@ namespace Spaceworks.Orbits.Kepler {
 
             double rotation = Math.Atan(angularMomentum.x / (-angularMomentum.y));
             double i = Math.Atan(Math.Sqrt(angularMomentum.x * angularMomentum.x + angularMomentum.y * angularMomentum.y) / angularMomentum.z);
-            
-            //TODO
+
+            //Rotate position into orbital frame
+            Vector3d ascendingNodeAxis = Vector3d.Rotate(position, rotation, new Vector3d(0, 0, 1));
+            ascendingNodeAxis = Vector3d.Rotate(ascendingNodeAxis, i, new Vector3d(1, 0, 0));
+
+            //Determine the latitude
+            double lat = Math.Atan(ascendingNodeAxis.y / ascendingNodeAxis.x);
+
+            double distance = position.magnitude;
+            double speed = velocity.magnitude;
+            double angularMomentumSpeed = angularMomentum.magnitude;
+
+            //Determine semi-major axis and eccentricity
+            double a = (mu * distance) / (2 * mu - distance * (speed * speed));
+            double e = Math.Sqrt(1 - (angularMomentumSpeed * angularMomentumSpeed / (mu * a)));
+
+            //Radial velocity
+            double radSpeed = Vector3d.Dot(position, velocity) / distance;
+
+            double sin_E = (a - distance) / (a * e);
+            double cos_E = (distance * radSpeed) / (e * Math.Sqrt(mu * a));
+
+            double v = Math.Atan((Math.Sqrt(1 - e * e) * sin_E) / (cos_E - e));
+
+            double rotationPerifocus = lat - v;
+
+            //Determine mean anomaly
+            double E = Math.Asin(sin_E);
+            double M = E - e * sin_E;
+
+            //Set values
+            p.ascendingNode = rotation;
+            p.eccentricity = e;
+            p.inclination = i;
+            p.meanAnomaly = M;
+            p.perifocus = rotationPerifocus;
+            p.semiMajorLength = a;
 
             return p;
         }
     }
 
+    /// <summary>
+    /// List of constants used in kepler orbit calculations
+    /// </summary>
     public class KeplerConstants {
         //Distance
 
-        public static int METERS_TO_KILOMETER = 1000;
-
-        public static double AU = 1.496e+11;
-        public static double LIGHT_SECOND = 2.998e+8;
-        public static double LIGHT_MINUTE = 1.799e+10;
-        public static double LIGHT_HOUR = 1.079e+12;
-        public static double LIGHT_DAY = 2.59e+13;
-        public static double LIGHT_YEAR = 9.461e+15;
+        public static double KILOMETER_TO_METER = 1000;
+        public static double AU_TO_METER = 1.496e+11;
+        public static double LIGHT_SECOND_TO_METER = 2.998e+8;
+        public static double LIGHT_MINUTE_TO_METER = 1.799e+10;
+        public static double LIGHT_HOUR_TO_METER = 1.079e+12;
+        public static double LIGHT_DAY_TO_METER = 2.59e+13;
+        public static double LIGHT_YEAR_TO_METER = 9.461e+15;
 
         //Time
 
@@ -601,6 +644,9 @@ namespace Spaceworks.Orbits.Kepler {
 
     }
 
+    /// <summary>
+    /// Class used to describe a body of a given mass in a specific orbit
+    /// </summary>
     public class KeplerBody {
 
         /// <summary>
