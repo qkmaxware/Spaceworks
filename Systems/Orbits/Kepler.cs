@@ -212,59 +212,91 @@ namespace Spaceworks.Orbits.Kepler {
 
         /// <summary>
         /// Create orbital parameters from an object in a cartesian coordinate system centered on a large mass in which to orbit
+        /// https://en.wikipedia.org/wiki/Orbital_elements
+        /// http://orbitsimulator.com/formulas/OrbitalElements.html
         /// </summary>
         /// <param name="mu">standard gravitational parameter</param>
         /// <param name="position">relative position</param>
         /// <param name="velocity">velocity</param>
         /// <returns></returns>
-        public static KeplerOrbitalParameters FromCartesian(double mu, Vector3d position, Vector3d velocity) {
-            KeplerOrbitalParameters p = new KeplerOrbitalParameters();
+        public static KeplerOrbitalParameters SolveOrbitalParameters(double mu, Vector3d position, Vector3d velocity) {
+            KeplerOrbitalParameters kop = new KeplerOrbitalParameters();
+
+            Vector3d r = position;
+            Vector3d v = velocity;
+
+            double R = r.magnitude;
+            double V = v.magnitude;
+
+            //Semi major axis
+            double a = 1 / (2 / R - V * V / mu);
 
             //Angular momentum
-            Vector3d angularMomentum = Vector3d.Cross(position, velocity);
-            Vector3d normal = angularMomentum.normalized;
+            Vector3d h = Vector3d.Cross(r, v);
+            double H = h.magnitude;
 
-            double rotation = Math.Atan(angularMomentum.x / (-angularMomentum.y));
-            double i = Math.Atan(Math.Sqrt(angularMomentum.x * angularMomentum.x + angularMomentum.y * angularMomentum.y) / angularMomentum.z);
+            Vector3d node = Vector3d.Cross(Vector3d.up, h);
 
-            //Rotate position into orbital frame
-            Vector3d ascendingNodeAxis = Vector3d.Rotate(position, rotation, new Vector3d(0, 0, 1));
-            ascendingNodeAxis = Vector3d.Rotate(ascendingNodeAxis, i, new Vector3d(1, 0, 0));
+            //...
+            double p = H * H / mu;
+            double q = Vector3d.Dot(r, v);
 
-            //Determine the latitude
-            double lat = Math.Atan(ascendingNodeAxis.y / ascendingNodeAxis.x);
+            //Eccentricity
+            Vector3d e = (V * V / mu - 1 / R) * r - (q / mu) * v;
+            double E = Math.Sqrt(1.0d - p / a);
+            double Ex = 1.0d - R / a;
+            double Ez = q / Math.Sqrt(a * mu);
 
-            double distance = position.magnitude;
-            double speed = velocity.magnitude;
-            double angularMomentumSpeed = angularMomentum.magnitude;
+            //Inclination (0 - 180 degrees)
+            double i = Math.Acos(h.y / H);
+            if (i >= KeplerConstants.PI) {
+                i = KeplerConstants.PI - i;
+            }
+            if (i == KeplerConstants.TWO_PI)
+                i = 0;
+            double lan = 0;
+            if (i % KeplerConstants.PI != 0) {
+                lan = Math.Atan2(h.x, -h.z);
+            }
 
-            //Determine semi-major axis and eccentricity
-            double a = (mu * distance) / (2 * mu - distance * (speed * speed));
-            double e = Math.Sqrt(1 - (angularMomentumSpeed * angularMomentumSpeed / (mu * a)));
+            //Argument of perifocus
+            double W;
+            if (i == 0) {
+                //Equitorial orbit
+                W = Math.Atan2(e.z, e.x);
+            }
+            else {
+                W = Math.Acos(
+                    Vector3d.Dot(node, e) /
+                    (node.magnitude * E)
+                );
+            }
+            if (W < 0) {
+                W = KeplerConstants.TWO_PI + W;
+            }
 
-            //Radial velocity
-            double radSpeed = Vector3d.Dot(position, velocity) / distance;
+            //Compute anomalies
+            double tAnom = Math.Acos(Vector3d.Dot(e, r) / (E * R));
+            if (q < 0)
+                tAnom = KeplerConstants.TWO_PI - tAnom;
+            double eAnom = KeplerUtils.TrueToEccentric(tAnom, E);
+            double mAnom = KeplerUtils.EccentricToMean(eAnom, E);
+            //double eAnom = Math.Atan2(Ez, Ex); //eccentric anomaly
+            //double mAnom = eAnom - E * Math.Sin(eAnom); //mean anomaly
 
-            double sin_E = (a - distance) / (a * e);
-            double cos_E = (distance * radSpeed) / (e * Math.Sqrt(mu * a));
+            //Set the values
+            kop.ascendingNode = lan;
+            kop.eccentricity = E;
+            kop.inclination = i;
+            kop.meanAnomaly = mAnom;
+            kop.perifocus = W;
+            kop.semiMajorLength = a;
 
-            double v = Math.Atan((Math.Sqrt(1 - e * e) * sin_E) / (cos_E - e));
+            return kop;
+        }
 
-            double rotationPerifocus = lat - v;
-
-            //Determine mean anomaly
-            double E = Math.Asin(sin_E);
-            double M = E - e * sin_E;
-
-            //Set values
-            p.ascendingNode = rotation;
-            p.eccentricity = e;
-            p.inclination = i;
-            p.meanAnomaly = M;
-            p.perifocus = rotationPerifocus;
-            p.semiMajorLength = a;
-
-            return p;
+        public override string ToString() {
+            return JsonUtility.ToJson(this, true);
         }
     }
 
@@ -272,38 +304,46 @@ namespace Spaceworks.Orbits.Kepler {
     /// List of constants used in kepler orbit calculations
     /// </summary>
     public class KeplerConstants {
+        //Misc
+
+        public static double EPSILON = double.Epsilon;
+
         //Distance
 
         public static double KILOMETER_TO_METER = 1000;
-        public static double AU_TO_METER = 1.496e+11;
-        public static double LIGHT_SECOND_TO_METER = 2.998e+8;
-        public static double LIGHT_MINUTE_TO_METER = 1.799e+10;
-        public static double LIGHT_HOUR_TO_METER = 1.079e+12;
-        public static double LIGHT_DAY_TO_METER = 2.59e+13;
-        public static double LIGHT_YEAR_TO_METER = 9.461e+15;
+        public static double AU_TO_METER = 1.496e+11d;
+        public static double LIGHT_SECOND_TO_METER = 2.998e+8d;
+        public static double LIGHT_MINUTE_TO_METER = 1.799e+10d;
+        public static double LIGHT_HOUR_TO_METER = 1.079e+12d;
+        public static double LIGHT_DAY_TO_METER = 2.59e+13d;
+        public static double LIGHT_YEAR_TO_METER = 9.461e+15d;
+
+        public static double EARTH_RADIUS = 6371 * KILOMETER_TO_METER;
 
         //Time
 
         public static int HOURS_TO_SECONDS = 3600;
         public static int DAYS_TO_SECONDS = 86400;
-        public static int YEARS_TO_DAYS = DAYS_TO_SECONDS * 365;
+        public static int YEARS_TO_SECONDS = DAYS_TO_SECONDS * 365;
 
         //Rotation
 
-        public static double DEGREE_TO_RADIAN = 0.0174533;
+        public static double DEGREE_TO_RADIAN = 0.0174533d;
         public static double PI = Math.PI;
         public static double TWO_PI = 2 * PI;
 
         //Mass
 
         public static int TONNE_TO_KG = 1000;
-        public static double EARTH_MASS = 5.974e24;
-        public static double SOLAR_MASS = 1.9891e30;
+        public static double EARTH_MASS = 5.974e24d;
+        public static double SOLAR_MASS = 1.9891e30d;
+        public static double SHUTTLE_MASS = 2027557.894d;
 
         //Gravity
 
-        public static double G = 6.674e-11;
-
+        public static double G = 6.674e-11d;
+        public static double DEG_TO_RAD = Math.PI / (180);
+        public static double RAD_TO_DEG = (180d) / Math.PI;
     }
 
     /// <summary>
@@ -548,17 +588,15 @@ namespace Spaceworks.Orbits.Kepler {
         /// <param name="vec"></param>
         /// <returns></returns>
         private Vector3d undoRotation(Vector3d vec) {
+            double x = Math.Cos(this.perifocus) * vec.x - Math.Sin(this.perifocus) * vec.z;
+            double z = Math.Sin(this.perifocus) * vec.x + Math.Cos(this.perifocus) * vec.z;
+            double y = Math.Sin(this.inclination) * x;
 
-            //Rotate so that the periapsis lines up with the reference vector
-            vec = Vector3d.Rotate(vec, -this.perifocus, new Vector3d(0, 0, 1));
+            x = Math.Cos(this.inclination) * x;
+            z = Math.Sin(this.ascendingNode) * x - Math.Sin(this.ascendingNode) * z;
+            x = Math.Sin(this.ascendingNode) * x + Math.Cos(this.ascendingNode) * z;
 
-            //Rotate so that the orbital plane lines up with the reference plane
-            vec = Vector3d.Rotate(vec, -this.inclination, new Vector3d(1,0,0));
-
-            //Rotate so that the ascending node lines up with the reference vector 
-            vec = Vector3d.Rotate(vec, -this.ascendingNode, new Vector3d(0, 0, 1));
-
-            return vec;
+            return new Vector3d(x,y,z);
         }
 
         #endregion
@@ -566,60 +604,49 @@ namespace Spaceworks.Orbits.Kepler {
         #region manipulators
 
         /// <summary>
-        /// Get the coordinate of the object in "local" Cartesian coordinates
+        /// Get the 2D position in the orbital XZ plane that represents the position of that body at Eccentric Anomaly E
         /// </summary>
-        /// <param name="angle"></param>
+        /// <param name="E"></param>
         /// <returns></returns>
-        public Vector3d GetCartesianPosition(double angle) {
-            //Initial ellipse
-            Vector3d pos = new Vector3d(
-                a * Math.Cos(angle) - a * eccentricity,
+        public Vector3d GetPlanarPositionAtEccentricAnomaly(double E) {
+            double e = this.eccentricity;
+            return new Vector3d(
+                a * (Math.Cos(E) - e),
                 0,
-                b * Math.Sin(angle)
+                a * Math.Sin(E) * Math.Sqrt(1 - e * e)
             );
-            
-            //Transform
-            Vector3d finalPos = undoRotation(pos);
-
-            return finalPos;
         }
 
         /// <summary>
-        /// Get the coordinate of the object in "local" Cartesian coordinates (ignore parent position)
+        /// Get the 3D position in the planet centered XYZ that represents the position of that body at Eccentric Anomaly E
         /// </summary>
+        /// <param name="E"></param>
         /// <returns></returns>
-        public Vector3d GetCartesianPosition() {
-            return this.GetCartesianPosition(this.eccentricAnomaly);
+        public Vector3d GetWorldPositionAtEccentricAnomaly(double E) {
+            //Get the planar position
+            Vector3d local = GetPlanarPositionAtEccentricAnomaly(E);
+
+            //Rotate into world coordinates
+            return undoRotation(local);
         }
 
         /// <summary>
-        /// Get the velocity of the object in "local" Cartesian coordinates (ignore parent velocity)
+        /// Get the 3D position in the planet centered XYZ coordiante system at the current position
         /// </summary>
         /// <returns></returns>
-        public Vector3d GetCartesianVelocity() {
-            double e = this.eccentricAnomaly;
-            double mm = this.meanMotion;
-
-            Vector3d vel = new Vector3d(
-                ((mm * a) / (1 - (eccentricity * Math.Cos(e)))) * (-Math.Sin(e)),
-                0,
-                ((mm * a) / (1 - (eccentricity * Math.Cos(e)))) * (Math.Sqrt(1 - (eccentricity * eccentricity)) * Math.Cos(e))
-            );
-
-            //Transform
-            Vector3d finalVel = undoRotation(vel);
-
-            return finalVel;
+        public Vector3d GetCurrentPosition() {
+            return this.GetWorldPositionAtEccentricAnomaly(this.eccentricAnomaly);
         }
 
+        /*
         /// <summary>
         /// Add velocity to modify the orbit
         /// </summary>
         /// <param name="deltaV"></param>
-        public void AddCartesianVelocity(Vector3d deltaV) {
-            Vector3d vel = this.GetCartesianVelocity() + deltaV;
+        public void AddVelocity(Vector3d deltaV) {
+            Vector3d vel = this.GetVelocity() + deltaV;
 
-            KeplerOrbitalParameters kp = KeplerOrbitalParameters.FromCartesian(this.standardGravitationalParameter, this.GetCartesianPosition(), vel);
+            KeplerOrbitalParameters kp = KeplerOrbitalParameters.SolveOrbitalParameters(this.standardGravitationalParameter, this.GetPosition(), vel);
 
             this.semiMajorLength = kp.semiMajorLength;
             this.eccentricity = kp.eccentricity;
@@ -627,7 +654,7 @@ namespace Spaceworks.Orbits.Kepler {
             this.inclination = kp.inclination;
             this.perifocus = kp.perifocus;
             this.ascendingNode = kp.ascendingNode;
-        }
+        }*/
 
         /// <summary>
         /// Move the object forward or backwards in time by a fixed time-step
@@ -638,6 +665,40 @@ namespace Spaceworks.Orbits.Kepler {
             double n_ma = (meanAnomaly + deltaM) % (KeplerConstants.TWO_PI);
 
             this.meanAnomaly = n_ma;
+        }
+
+        public override string ToString() {
+            var obj = new {
+                SemiMajorAxis = this.semiMajorLength,
+                SemiMinorAxis = this.semiMinorAxis,
+                Eccentricity = this.eccentricity,
+                Inclination = this.inclination,
+                ArgumentOfPeriapsis = this.perifocus,
+                LongitudeOfAscendingNode = this.ascendingNode,
+                OrbitalPeriod = this.period,
+                MeanAnomaly = this.meanAnomaly,
+                EccentricAnomaly = this.eccentricAnomaly,
+                TrueAnomaly = this.trueAnomaly,
+                PeriapsisDistance = this.periapsis,
+                ApoapsisDistance = this.apoapsis,
+                MeanMotion = this.meanMotion
+            };
+            return 
+                "{\n" +
+                "    \"SemiMajorAxis\": "+obj.SemiMajorAxis + "\n" +
+                "    \"SemiMinorAxis\": " + obj.SemiMinorAxis + "\n" +
+                "    \"Eccentricity\": " + obj.Eccentricity + "\n" +
+                "    \"Inclination\": " + obj.Inclination + "\n" +
+                "    \"ArgumentOfPeriapsis\": " + obj.ArgumentOfPeriapsis + "\n" +
+                "    \"LongitudeOfAscendingNode\": " + obj.LongitudeOfAscendingNode + "\n" +
+                "    \"OrbitalPeriod\": " + obj.OrbitalPeriod + "\n" +
+                "    \"MeanAnomaly\": " + obj.MeanAnomaly + "\n" +
+                "    \"EccentricAnomaly\": " + obj.EccentricAnomaly + "\n" +
+                "    \"TrueAnomaly\": " + obj.TrueAnomaly + "\n" +
+                "    \"PeriapsisDistance\": " + obj.PeriapsisDistance + "\n" +
+                "    \"ApoapsisDistance\": " + obj.ApoapsisDistance + "\n" +
+                "    \"MeanMotion\": " + obj.MeanMotion + "\n" +
+                "}";
         }
 
         #endregion
@@ -666,6 +727,10 @@ namespace Spaceworks.Orbits.Kepler {
         public KeplerBody(double mass, KeplerOrbit orbit){
             this.mass = mass;
             this.orbit = orbit;
+        }
+
+        public override string ToString() {
+            return "{\n\"Mass\": " + this.mass + ",\n" + "\"Orbit\": " + this.orbit.ToString() + "\n}";
         }
 
     }

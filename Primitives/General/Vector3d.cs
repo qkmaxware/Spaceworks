@@ -10,6 +10,18 @@ namespace Spaceworks {
         public double y;
         public double z;
 
+        public static readonly Vector3d zero = new Vector3d();
+        public static readonly Vector3d one = new Vector3d(1, 1, 1);
+        public static readonly Vector3d i = new Vector3d(1, 0, 0);
+        public static readonly Vector3d j = new Vector3d(0, 1, 0);
+        public static readonly Vector3d k = new Vector3d(0, 0, 1);
+        public static readonly Vector3d right = i;
+        public static readonly Vector3d left = -1 * right;
+        public static readonly Vector3d up = j;
+        public static readonly Vector3d down = -1 * up;
+        public static readonly Vector3d front = k;
+        public static readonly Vector3d back = -1 * front;
+
         /// <summary>
         /// Convert double precision vector to single precision
         /// </summary>
@@ -42,7 +54,10 @@ namespace Spaceworks {
         /// </summary>
         public Vector3d normalized {
             get {
-                double m = 1 / this.magnitude;
+                double M = this.magnitude;
+                if (M == 0)
+                    return Vector3d.zero;
+                double m = 1 / M;
                 return new Vector3d(x * m, y * m, z * m);
             }
         }
@@ -101,6 +116,19 @@ namespace Spaceworks {
         /// <returns></returns>
         public static double Dot(Vector3d u, Vector3d v) {
             return u.x * v.x + u.y * v.y + u.z * v.z;
+        }
+
+        /// <summary>
+        /// Compute the angle between two vectors in radians
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static double Angle(Vector3d a, Vector3d b) {
+            double dot = Vector3d.Dot(a.normalized, b.normalized);
+            return System.Math.Acos(
+                dot < -1 ? -1 : (dot > 1 ? 1 : dot)
+            );
         }
 
         /// <summary>
@@ -170,6 +198,11 @@ namespace Spaceworks {
             return new Vector3d(a * v.x, a * v.y, a * v.z);
         }
 
+        // /
+        public static Vector3d operator /(Vector3d v, double a) {
+            return v * (1 / a);
+        }
+
         //==
         public static bool operator ==(Vector3d a, Vector3d b) {
             return a.x == b.x && a.y == b.y && a.z == b.z;
@@ -188,6 +221,10 @@ namespace Spaceworks {
 
         public override int GetHashCode() {
             return base.GetHashCode();
+        }
+
+        public override string ToString() {
+            return "(" + this.x + ", " + this.y + ", " + this.z + ")"; 
         }
 
         #endregion
