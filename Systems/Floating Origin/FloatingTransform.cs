@@ -52,9 +52,16 @@ namespace Spaceworks.Position {
 			}
 		}
 
+        private Collider[] monitoredColliders;
+
         public void Start() {
             FloatingOrigin.Add(this);
             this.worldPosition = new WorldPosition(this.unityPosition);
+            UpdateColliderList();
+        }
+
+        public void UpdateColliderList() {
+            this.monitoredColliders = this.GetComponentsInChildren<Collider>();
         }
 
 		public void SetParent(FloatingTransform parent){
@@ -73,11 +80,25 @@ namespace Spaceworks.Position {
 		}
 
 		public void UpdateUnityPosition(){
-			unityPosition = (worldPosition - FloatingOrigin.center).ToVector3();
+			UpdateUnityPosition(FloatingOrigin.center);
 		}
 
 		public void UpdateUnityPosition(WorldPosition sceneCenter){
+            //disable colliders 
+            List<Collider> touchedColliders = new List<Collider>();
+            foreach(Collider c in this.monitoredColliders) {
+                if (c.enabled) {
+                    touchedColliders.Add(c);
+                    c.enabled = false;
+                }
+            }
+
 			unityPosition = (worldPosition - sceneCenter).ToVector3();
+
+            //enable colliders
+            foreach (Collider c in touchedColliders) {
+                c.enabled = true;
+            }
 		}
 
 		public virtual void OnOriginChange(WorldPosition sceneCenter) {
