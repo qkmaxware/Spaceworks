@@ -6,17 +6,17 @@ using UnityEngine;
 namespace Spaceworks.Position {
 
     [System.Serializable]
-    public class WorldPosition : IEquatable<WorldPosition> {
+    public class WorldPosition {
 
         public static Vector3 defaultSectorSize = new Vector3(1000, 1000, 1000);
 
-        public Vector3 sectorOffset = new Vector3();
-        public Long3 sector = new Long3();
+        public Vector3 sectorOffset = new Vector3(0f, 0f, 0f);
+        public Long3 sector = new Long3(0,0,0);
 
         public static readonly WorldPosition zero = new WorldPosition();
 
         public WorldPosition() {
-            this.sectorOffset = new Vector3(0, 0, 0);
+            this.sectorOffset = new Vector3(0f, 0f, 0f);
             this.sector = new Long3(0, 0, 0);
         }
         public WorldPosition(double x, double y, double z) : this() {
@@ -117,14 +117,12 @@ namespace Spaceworks.Position {
             return (b - a).sqrMagnitude;
         }
 
-        public bool Equals(WorldPosition other) {
-            return sectorOffset == other.sectorOffset && sector == other.sector;
-        }
-
         public override bool Equals(System.Object other) {
+            if (other == null)
+                return false;
             if (other is WorldPosition == false)
                 return false;
-            return this.Equals((WorldPosition)other);
+            return sectorOffset == ((WorldPosition)other).sectorOffset && sector == ((WorldPosition)other).sector;
         }
 
         public override int GetHashCode() {

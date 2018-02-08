@@ -61,13 +61,14 @@ namespace Spaceworks.Position {
             if (!foci)
                 return;
             
-            if (foci.transform.position.sqrMagnitude > bufferDistance * bufferDistance) {
+            if (Mathf.Abs(foci.transform.position.x) > bufferDistance || Mathf.Abs(foci.transform.position.y) > bufferDistance || Mathf.Abs(foci.transform.position.z) > bufferDistance) {
                 WorldPosition delta = new WorldPosition(foci.transform.position).SectorOnly();
                 this.sceneCenter += delta;
                 foci.transform.position -= delta.ToVector3();
 
                 foreach (FloatingTransform tr in monitored) {
-                    tr.OnOriginChange(this.sceneCenter);
+                    if(tr != null)
+                        tr.OnOriginChange(this.sceneCenter);
                 }
             }
         }

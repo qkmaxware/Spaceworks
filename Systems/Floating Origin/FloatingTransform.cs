@@ -52,6 +52,8 @@ namespace Spaceworks.Position {
 			}
 		}
 
+        public bool autoDisableColliders = true;
+
         private Collider[] monitoredColliders;
 
         public void Start() {
@@ -69,15 +71,25 @@ namespace Spaceworks.Position {
 			UpdateUnityPosition ();
 		}
 
-		public void SetLocalPosition(WorldPosition p){
+		public void SetLocalPosition(WorldPosition p, WorldPosition center = null){
 			this.localPosition = p;
-			UpdateUnityPosition ();
+            if (!center.Equals(null)) {
+                UpdateUnityPosition(center);
+            }
+            else {
+                UpdateUnityPosition();
+            }
 		}
 
-		public void SetWorldPosition(WorldPosition p){
+		public void SetWorldPosition(WorldPosition p, WorldPosition center = null) {
 			this.worldPosition = p;
-			UpdateUnityPosition ();
-		}
+            if (!center.Equals(null)) {
+                UpdateUnityPosition(center);
+            }
+            else {
+                UpdateUnityPosition();
+            }
+        }
 
 		public void UpdateUnityPosition(){
 			UpdateUnityPosition(FloatingOrigin.center);
@@ -86,18 +98,22 @@ namespace Spaceworks.Position {
 		public void UpdateUnityPosition(WorldPosition sceneCenter){
             //disable colliders 
             List<Collider> touchedColliders = new List<Collider>();
-            foreach(Collider c in this.monitoredColliders) {
-                if (c.enabled) {
-                    touchedColliders.Add(c);
-                    c.enabled = false;
+            if (autoDisableColliders) {
+                foreach (Collider c in this.monitoredColliders) {
+                    if (c.enabled) {
+                        touchedColliders.Add(c);
+                        c.enabled = false;
+                    }
                 }
             }
 
 			unityPosition = (worldPosition - sceneCenter).ToVector3();
 
             //enable colliders
-            foreach (Collider c in touchedColliders) {
-                c.enabled = true;
+            if (autoDisableColliders) {
+                foreach (Collider c in touchedColliders) {
+                    c.enabled = true;
+                }
             }
 		}
 

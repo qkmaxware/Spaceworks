@@ -19,8 +19,8 @@ namespace Spaceworks {
         public static readonly Vector3d left = -1 * right;
         public static readonly Vector3d up = j;
         public static readonly Vector3d down = -1 * up;
-        public static readonly Vector3d front = k;
-        public static readonly Vector3d back = -1 * front;
+        public static readonly Vector3d forward = k;
+        public static readonly Vector3d back = -1 * forward;
 
         /// <summary>
         /// Convert double precision vector to single precision

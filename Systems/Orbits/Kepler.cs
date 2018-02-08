@@ -399,6 +399,22 @@ namespace Spaceworks.Orbits.Kepler {
         #endregion
 
         #region derivable_parameters
+        /// <summary>
+        /// Normal of the orbital plane in world XYZ coordinates
+        /// </summary>
+        public Vector3d normal {
+            get {
+                Vector3d planeNormal = Vector3d.up;
+
+                //Rotate to match inclination
+                planeNormal = Vector3d.Rotate(planeNormal, this.inclination, Vector3d.forward);
+
+                //Rotate to align the ascending node to the reference direction
+                planeNormal = Vector3d.Rotate(planeNormal, this.ascendingNode, Vector3d.up);
+
+                return planeNormal;
+            }
+        }
 
         /// <summary>
         /// Length of the semi-minor axis
@@ -583,20 +599,24 @@ namespace Spaceworks.Orbits.Kepler {
         #region helper_functions
 
         /// <summary>
-        /// Rotate a vector from the orbital XZ plane to world XYZ 
+        /// Rotate a vector from the orbital XZ plane to world XYZ coordinates
         /// </summary>
         /// <param name="vec"></param>
         /// <returns></returns>
         private Vector3d undoRotation(Vector3d vec) {
-            double x = Math.Cos(this.perifocus) * vec.x - Math.Sin(this.perifocus) * vec.z;
-            double z = Math.Sin(this.perifocus) * vec.x + Math.Cos(this.perifocus) * vec.z;
-            double y = Math.Sin(this.inclination) * x;
+            //Use the XZ plane with +X as the reference direction
+            Vector3d rot = new Vector3d(vec);
+            
+            //Rotate to match inclination
+            rot = Vector3d.Rotate(rot, this.inclination, Vector3d.forward);
 
-            x = Math.Cos(this.inclination) * x;
-            z = Math.Sin(this.ascendingNode) * x - Math.Sin(this.ascendingNode) * z;
-            x = Math.Sin(this.ascendingNode) * x + Math.Cos(this.ascendingNode) * z;
+            //Rotate to align the ascending node to the reference direction
+            rot = Vector3d.Rotate(rot, this.ascendingNode, Vector3d.up);
 
-            return new Vector3d(x,y,z);
+            //Rotate the periapsis line
+            rot = Vector3d.Rotate(rot, this.perifocus, this.normal);
+
+            return rot;
         }
 
         #endregion
@@ -698,6 +718,7 @@ namespace Spaceworks.Orbits.Kepler {
                 "    \"PeriapsisDistance\": " + obj.PeriapsisDistance + "\n" +
                 "    \"ApoapsisDistance\": " + obj.ApoapsisDistance + "\n" +
                 "    \"MeanMotion\": " + obj.MeanMotion + "\n" +
+                "    \"Position\": " + this.GetCurrentPosition().ToString() + "\n" +
                 "}";
         }
 
