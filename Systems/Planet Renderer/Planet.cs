@@ -51,6 +51,7 @@ namespace Spaceworks {
         private class CachedMeshHolder {
             public GameObject gameObject;
             public MeshFilter filter;
+            public MeshCollider collider;
         }
 
         public GameObject go { get; private set; }
@@ -297,6 +298,10 @@ namespace Spaceworks {
             activeChunks.Clear();
         }
 
+        /// <summary>
+        /// Pop an unused container from the queue, or generate new containers if required
+        /// </summary>
+        /// <returns></returns>
         private CachedMeshHolder PopMeshContainer() {
             while (meshPool.Count < 3) {
                 GameObject g = new GameObject("Chunk");
@@ -312,9 +317,13 @@ namespace Spaceworks {
                 meshRenderer.sharedMaterial = this.material;
                 g.SetActive(false);
 
+                MeshCollider collider = g.AddComponent<MeshCollider>();
+                collider.enabled = false;
+
                 CachedMeshHolder holder = new CachedMeshHolder();
                 holder.gameObject = g;
                 holder.filter = meshFilter;
+                holder.collider = collider;
 
                 meshPool.Enqueue(holder);
             }
