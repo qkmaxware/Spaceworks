@@ -73,7 +73,7 @@ namespace Spaceworks.Position {
 
 		public void SetLocalPosition(WorldPosition p, WorldPosition center = null){
 			this.localPosition = p;
-            if (!center.Equals(null)) {
+            if (center != null) {
                 UpdateUnityPosition(center);
             }
             else {
@@ -83,7 +83,7 @@ namespace Spaceworks.Position {
 
 		public void SetWorldPosition(WorldPosition p, WorldPosition center = null) {
 			this.worldPosition = p;
-            if (!center.Equals(null)) {
+            if (center != null) {
                 UpdateUnityPosition(center);
             }
             else {

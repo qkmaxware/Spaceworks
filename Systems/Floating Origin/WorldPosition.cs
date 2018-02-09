@@ -117,14 +117,6 @@ namespace Spaceworks.Position {
             return (b - a).sqrMagnitude;
         }
 
-        public override bool Equals(System.Object other) {
-            if (other == null)
-                return false;
-            if (other is WorldPosition == false)
-                return false;
-            return sectorOffset == ((WorldPosition)other).sectorOffset && sector == ((WorldPosition)other).sector;
-        }
-
         public override int GetHashCode() {
             return sectorOffset.GetHashCode() ^ sector.GetHashCode();
         }
@@ -166,12 +158,12 @@ namespace Spaceworks.Position {
             return p;
         }
 
-        public static bool operator ==(System.Object a, WorldPosition b) {
-            return a.Equals(b);
-        }
-
-        public static bool operator !=(System.Object a, WorldPosition b) {
-            return !a.Equals(b);
+        public override bool Equals(System.Object other) {
+            if (other == null)
+                return false;
+            if (other is WorldPosition == false)
+                return false;
+            return sectorOffset == ((WorldPosition)other).sectorOffset && sector == ((WorldPosition)other).sector;
         }
 
         public static bool operator ==(WorldPosition a, System.Object b) {
