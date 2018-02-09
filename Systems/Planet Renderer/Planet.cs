@@ -48,6 +48,11 @@ namespace Spaceworks {
             public PlanetMergeTask(System.Action<Task> fn) : base(fn) { }
         }
 
+        private class CachedMeshHolder {
+            public GameObject gameObject;
+            public MeshFilter filter;
+        }
+
         public GameObject go { get; private set; }
         public Transform transform { get { return go.transform; } }
 
@@ -64,11 +69,11 @@ namespace Spaceworks {
         private Material material;
 
         //Meshpooling
-        private Queue<MeshFilter> meshPool = new Queue<MeshFilter>();
-        private List<MeshFilter> activeMeshes = new List<MeshFilter>();
+        private Queue<CachedMeshHolder> meshPool = new Queue<CachedMeshHolder>();
+        private List<CachedMeshHolder> activeMeshes = new List<CachedMeshHolder>();
         //Chunkpooling
         private HashSet<QuadNode<ChunkData>> activeChunks = new HashSet<QuadNode<ChunkData>>();
-        private Dictionary<QuadNode<ChunkData>, MeshFilter> chunkMeshMap = new Dictionary<QuadNode<ChunkData>, MeshFilter>();
+        private Dictionary<QuadNode<ChunkData>, CachedMeshHolder> chunkMeshMap = new Dictionary<QuadNode<ChunkData>, CachedMeshHolder>();
         //Threading
         private Dictionary<QuadNode<ChunkData>, Task> splitTasks = new Dictionary<QuadNode<ChunkData>, Task>();
         private Dictionary<QuadNode<ChunkData>, Task> mergeTasks = new Dictionary<QuadNode<ChunkData>, Task>();
@@ -264,7 +269,7 @@ namespace Spaceworks {
         }
 
         private void DiscardNode(QuadNode<ChunkData> node) {
-            MeshFilter mf;
+            CachedMeshHolder mf;
             if (chunkMeshMap.TryGetValue(node, out mf)) {
                 //Hide and pool node
                 this.activeMeshes.Remove(mf);
@@ -283,7 +288,7 @@ namespace Spaceworks {
         }
 
         private void DiscardAllNodes() {
-            foreach (MeshFilter mf in this.activeMeshes) {
+            foreach (CachedMeshHolder mf in this.activeMeshes) {
                 mf.gameObject.SetActive(false);
                 meshPool.Enqueue(mf);
             }
@@ -292,28 +297,38 @@ namespace Spaceworks {
             activeChunks.Clear();
         }
 
+        private CachedMeshHolder PopMeshContainer() {
+            while (meshPool.Count < 3) {
+                GameObject g = new GameObject("Chunk");
+                g.transform.SetParent(go.transform);
+                g.transform.localPosition = Vector3.zero;
+
+                MeshFilter meshFilter = g.AddComponent<MeshFilter>();
+                Mesh m = new Mesh();
+                m.name = "Cached Chunk Mesh";
+                meshFilter.sharedMesh = m;
+
+                MeshRenderer meshRenderer = g.AddComponent<MeshRenderer>();
+                meshRenderer.sharedMaterial = this.material;
+                g.SetActive(false);
+
+                CachedMeshHolder holder = new CachedMeshHolder();
+                holder.gameObject = g;
+                holder.filter = meshFilter;
+
+                meshPool.Enqueue(holder);
+            }
+
+            CachedMeshHolder container = meshPool.Dequeue();
+            return container;
+        }
+
         private void ShowNodeMerge(QuadNode<ChunkData> node, MeshData mesh, HashSet<QuadNode<ChunkData>> activeList) {
 
               if (!chunkMeshMap.ContainsKey(node)) {
                   //Buffer
-                  while (meshPool.Count < 3) {
-                      GameObject g = new GameObject("Chunk");
-                      g.transform.SetParent(go.transform);
-                      g.transform.localPosition = Vector3.zero;
-
-                      MeshFilter meshFilter = g.AddComponent<MeshFilter>();
-                      Mesh m = new Mesh();
-                      m.name = "Cached Chunk Mesh";
-                      meshFilter.sharedMesh = m;
-
-                      MeshRenderer meshRenderer = g.AddComponent<MeshRenderer>();
-                      meshRenderer.sharedMaterial = this.material;
-                      g.SetActive(false);
-
-                      meshPool.Enqueue(meshFilter);
-                  }
-
-                  MeshFilter filter = meshPool.Dequeue();
+                  CachedMeshHolder container = PopMeshContainer();
+                MeshFilter filter = container.filter;
                   filter.sharedMesh = mesh.mesh;
 
                   if (node.value.bounds == null) {
@@ -341,8 +356,8 @@ namespace Spaceworks {
                   }
 
                   //Add me if I don't already exist
-                  this.activeMeshes.Add(filter);
-                  this.chunkMeshMap[node] = filter;
+                  this.activeMeshes.Add(container);
+                  this.chunkMeshMap[node] = container;
               }
               if (!activeList.Contains(node))
                   activeList.Add(node);
@@ -353,24 +368,8 @@ namespace Spaceworks {
                 QuadNode<ChunkData> child = parent[(Quadrant)i];
                 if (!chunkMeshMap.ContainsKey(child)) {
                     //Buffer
-                    while (meshPool.Count < 3) {
-                        GameObject g = new GameObject("Chunk");
-                        g.transform.SetParent(go.transform);
-                        g.transform.localPosition = Vector3.zero;
-
-                        MeshFilter meshFilter = g.AddComponent<MeshFilter>();
-                        Mesh m = new Mesh();
-                        m.name = "Cached Chunk Mesh";
-                        meshFilter.sharedMesh = m;
-
-                        MeshRenderer meshRenderer = g.AddComponent<MeshRenderer>();
-                        meshRenderer.sharedMaterial = this.material;
-                        g.SetActive(false);
-
-                        meshPool.Enqueue(meshFilter);
-                    }
-
-                    MeshFilter filter = meshPool.Dequeue();
+                    CachedMeshHolder container = PopMeshContainer();
+                    MeshFilter filter = container.filter;
                     filter.sharedMesh = meshes[i].mesh;
 
                     if (child.value.bounds == null) {
@@ -398,8 +397,8 @@ namespace Spaceworks {
                     }
 
                     //Add me if I don't already exist
-                    this.activeMeshes.Add(filter);
-                    this.chunkMeshMap[child] = filter;
+                    this.activeMeshes.Add(container);
+                    this.chunkMeshMap[child] = container;
                 }
                 if (!activeList.Contains(child))
                     activeList.Add(child);
@@ -409,27 +408,11 @@ namespace Spaceworks {
         private void ShowNode(QuadNode<ChunkData> node, HashSet<QuadNode<ChunkData>> activeList) {
             if (!chunkMeshMap.ContainsKey(node)) {
                 //Buffer
-                while (meshPool.Count < 3) {
-                    GameObject g = new GameObject("Chunk");
-                    g.transform.SetParent(go.transform);
-                    g.transform.localPosition = Vector3.zero;
-
-                    MeshFilter meshFilter = g.AddComponent<MeshFilter>();
-                    Mesh m = new Mesh();
-                    m.name = "Cached Chunk Mesh";
-                    meshFilter.sharedMesh = m;
-
-                    MeshRenderer meshRenderer = g.AddComponent<MeshRenderer>();
-					meshRenderer.sharedMaterial = this.material;
-                    g.SetActive(false);
-
-                    meshPool.Enqueue(meshFilter);
-                }
-
-                MeshFilter filter = meshPool.Dequeue();
+                CachedMeshHolder container = PopMeshContainer();
+                MeshFilter filter = container.filter;
 
                 //Populate mesh
-				filter.sharedMesh = meshService.Make(node.range.a, node.range.b, node.range.d, node.range.c, this.radius).mesh;
+                filter.sharedMesh = meshService.Make(node.range.a, node.range.b, node.range.d, node.range.c, this.radius).mesh;
 				//filter.sharedMesh = SubPlane.Make(node.range.a, node.range.b, node.range.d, node.range.c, resolution); 
 
 				//Set chunk data if it was never computed before
@@ -463,8 +446,8 @@ namespace Spaceworks {
 				}
 
                 //Add me if I don't already exist
-                this.activeMeshes.Add(filter);
-                this.chunkMeshMap[node] = filter;
+                this.activeMeshes.Add(container);
+                this.chunkMeshMap[node] = container;
             }
             if(!activeList.Contains(node))
                 activeList.Add(node);

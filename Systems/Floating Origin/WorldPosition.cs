@@ -167,10 +167,18 @@ namespace Spaceworks.Position {
         }
 
         public static bool operator ==(WorldPosition a, System.Object b) {
+            if (((object)a) == null) {
+                return b == null;
+            }
+
             return a.Equals(b);
         }
 
         public static bool operator !=(WorldPosition a, System.Object b) {
+            if (((object)a) == null) {
+                return b != null;
+            }
+                
             return !a.Equals(b);
         }
 
