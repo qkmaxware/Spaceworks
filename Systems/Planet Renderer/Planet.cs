@@ -20,10 +20,10 @@ namespace Spaceworks {
         [Header("Coloring")]
         public Material material;
 
-		[Header("References")]
-		public IMeshService generationService;
-		public ITextureService textureService;
-		public IDetailer detailService;
+        [Header("References")]
+        public IMeshService generationService;
+        public ITextureService textureService;
+        public IDetailer detailService;
     }
 
     [System.Serializable]
@@ -62,10 +62,10 @@ namespace Spaceworks {
         public int maxResolutionAt = 50;
         public int maxDepth { get; private set; }
 
-		public float radius { get; private set;}
+        public float radius { get; private set; }
 
-		public IMeshService meshService { get; private set;}
-		public IDetailer detailService { get; private set; }
+        public IMeshService meshService { get; private set; }
+        public IDetailer detailService { get; private set; }
 
         private Material material;
 
@@ -87,9 +87,9 @@ namespace Spaceworks {
             this.maxResolutionAt = minDistance;
             this.maxDepth = treeDepth;
             this.material = material;
-			this.meshService = ms;
-			this.detailService = ds;
-			this.radius = baseRadius;
+            this.meshService = ms;
+            this.detailService = ds;
+            this.radius = baseRadius;
 
             //Create Gameobjects
             go = new GameObject("PlanetFace");
@@ -99,21 +99,21 @@ namespace Spaceworks {
             GenerateChunkdata(root);
         }
 
-		/// <summary>
-		/// Adds a highest detail listener.
-		/// </summary>
-		/// <param name="fn">Fn.</param>
-		public void AddHighestDetailListener(System.Action<QuadNode<ChunkData>> fn){
-			listeners.Add (fn);
-		}
+        /// <summary>
+        /// Adds a highest detail listener.
+        /// </summary>
+        /// <param name="fn">Fn.</param>
+        public void AddHighestDetailListener(System.Action<QuadNode<ChunkData>> fn) {
+            listeners.Add(fn);
+        }
 
-		/// <summary>
-		/// Removes a highest detail listener.
-		/// </summary>
-		/// <param name="fn">Fn.</param>
-		public void RemoveHighestDetailListener(System.Action<QuadNode<ChunkData>> fn){
-			listeners.Remove (fn);
-		}
+        /// <summary>
+        /// Removes a highest detail listener.
+        /// </summary>
+        /// <param name="fn">Fn.</param>
+        public void RemoveHighestDetailListener(System.Action<QuadNode<ChunkData>> fn) {
+            listeners.Remove(fn);
+        }
 
         /// <summary>
         /// Force the planet face to pick the best LODs immediately
@@ -175,13 +175,13 @@ namespace Spaceworks {
                         TaskPool.EnqueueInvocation(t);
                         ShowNode(node, ac);
                     }
-                } 
+                }
                 //Collapse Or Keep Node
                 else {
                     //Is Root, Cannot Split OR Child Wants To Merge But Parent Wants To Split
                     if (node.isRoot || canSplit(camera, node.parent)) {
                         ShowNode(node, ac);
-                    } 
+                    }
                     //Child Wants To Merge And Parent Wants To Be Shown
                     else {
                         if (mergeTasks.ContainsKey(node.parent)) {
@@ -201,7 +201,7 @@ namespace Spaceworks {
                                 ShowNode(node, ac);
                             }
                         }
-                        else if(!ac.Contains(node.parent)){
+                        else if (!ac.Contains(node.parent)) {
                             //No generation started, keep node, start generation
                             PlanetMergeTask t = new PlanetMergeTask((s) => {
                                 PlanetMergeTask self = (PlanetMergeTask)s;
@@ -237,7 +237,7 @@ namespace Spaceworks {
                 ForceCheckLod(camera, node[Quadrant.NorthWest]);
                 ForceCheckLod(camera, node[Quadrant.SouthEast]);
                 ForceCheckLod(camera, node[Quadrant.SouthWest]);
-            } 
+            }
             //Nope this is good (don't need to worry about merges on a forced method)
             else {
                 //Show LOD
@@ -251,7 +251,7 @@ namespace Spaceworks {
         /// <param name="node"></param>
         private void GenerateChunkdata(QuadNode<ChunkData> node) {
             ChunkData data = new ChunkData();
-			data.bounds = null;
+            data.bounds = null;
             data.breakpoint = maxResolutionAt * Mathf.Pow(2, maxDepth - node.depth);
             node.value = data;
         }
@@ -275,22 +275,24 @@ namespace Spaceworks {
                 //Hide and pool node
                 this.activeMeshes.Remove(mf);
                 this.meshPool.Enqueue(mf);
+                //mf.collider.enabled = false;
                 mf.gameObject.SetActive(false);
                 //Discard active node
                 this.chunkMeshMap.Remove(node);
                 //NOTE ** do not need to remove from activeChunks because the runtime algorithm resets this each frame
-				//Call highest detail action
-				if(node.depth == this.maxDepth){
-					//Call detailing service if available
-					if (detailService != null)
-						detailService.HideChunkDetails (node);
-				}
+                //Call highest detail action
+                if (node.depth == this.maxDepth) {
+                    //Call detailing service if available
+                    if (detailService != null)
+                        detailService.HideChunkDetails(node);
+                }
             }
         }
 
         private void DiscardAllNodes() {
             foreach (CachedMeshHolder mf in this.activeMeshes) {
                 mf.gameObject.SetActive(false);
+                //mf.collider.enabled = false;
                 meshPool.Enqueue(mf);
             }
             activeMeshes.Clear();
@@ -318,7 +320,7 @@ namespace Spaceworks {
                 g.SetActive(false);
 
                 MeshCollider collider = g.AddComponent<MeshCollider>();
-                collider.enabled = false;
+                //collider.enabled = false;
 
                 CachedMeshHolder holder = new CachedMeshHolder();
                 holder.gameObject = g;
@@ -334,42 +336,44 @@ namespace Spaceworks {
 
         private void ShowNodeMerge(QuadNode<ChunkData> node, MeshData mesh, HashSet<QuadNode<ChunkData>> activeList) {
 
-              if (!chunkMeshMap.ContainsKey(node)) {
-                  //Buffer
-                  CachedMeshHolder container = PopMeshContainer();
+            if (!chunkMeshMap.ContainsKey(node)) {
+                //Buffer
+                CachedMeshHolder container = PopMeshContainer();
                 MeshFilter filter = container.filter;
-                  filter.sharedMesh = mesh.mesh;
+                filter.sharedMesh = mesh.mesh;
+                container.collider.sharedMesh = filter.sharedMesh;
+                container.collider.enabled = true;
 
-                  if (node.value.bounds == null) {
-                      node.value.bounds = new Sphere(Vector3.zero, 1);
-                      node.value.bounds.center = filter.sharedMesh.bounds.center;
-                      node.value.bounds.radius = Mathf.Sqrt(
-                          filter.sharedMesh.bounds.extents.x * filter.sharedMesh.bounds.extents.x +
-                          filter.sharedMesh.bounds.extents.y * filter.sharedMesh.bounds.extents.y +
-                          filter.sharedMesh.bounds.extents.z * filter.sharedMesh.bounds.extents.z
-                      );
-                  }
+                if (node.value.bounds == null) {
+                    node.value.bounds = new Sphere(Vector3.zero, 1);
+                    node.value.bounds.center = filter.sharedMesh.bounds.center;
+                    node.value.bounds.radius = Mathf.Sqrt(
+                        filter.sharedMesh.bounds.extents.x * filter.sharedMesh.bounds.extents.x +
+                        filter.sharedMesh.bounds.extents.y * filter.sharedMesh.bounds.extents.y +
+                        filter.sharedMesh.bounds.extents.z * filter.sharedMesh.bounds.extents.z
+                    );
+                }
 
-                  //Show node
-                  filter.gameObject.SetActive(true);
+                //Show node
+                filter.gameObject.SetActive(true);
 
-                  //Call highest detail action
-                  if (node.depth == this.maxDepth) {
-                      //Call listeners if exists
-                      foreach (System.Action<QuadNode<ChunkData>> fn in this.listeners) {
-                          fn.Invoke(node);
-                      }
-                      //Call detailing service if available
-                      if (detailService != null)
-                          detailService.ShowChunkDetails(node, filter.sharedMesh);
-                  }
+                //Call highest detail action
+                if (node.depth == this.maxDepth) {
+                    //Call listeners if exists
+                    foreach (System.Action<QuadNode<ChunkData>> fn in this.listeners) {
+                        fn.Invoke(node);
+                    }
+                    //Call detailing service if available
+                    if (detailService != null)
+                        detailService.ShowChunkDetails(node, filter.sharedMesh);
+                }
 
-                  //Add me if I don't already exist
-                  this.activeMeshes.Add(container);
-                  this.chunkMeshMap[node] = container;
-              }
-              if (!activeList.Contains(node))
-                  activeList.Add(node);
+                //Add me if I don't already exist
+                this.activeMeshes.Add(container);
+                this.chunkMeshMap[node] = container;
+            }
+            if (!activeList.Contains(node))
+                activeList.Add(node);
         }
 
         private void ShowNodeSplit(QuadNode<ChunkData> parent, MeshData[] meshes, HashSet<QuadNode<ChunkData>> activeList) {
@@ -380,6 +384,8 @@ namespace Spaceworks {
                     CachedMeshHolder container = PopMeshContainer();
                     MeshFilter filter = container.filter;
                     filter.sharedMesh = meshes[i].mesh;
+                    container.collider.sharedMesh = filter.sharedMesh;
+                    container.collider.enabled = true;
 
                     if (child.value.bounds == null) {
                         child.value.bounds = new Sphere(Vector3.zero, 1);
@@ -419,46 +425,48 @@ namespace Spaceworks {
                 //Buffer
                 CachedMeshHolder container = PopMeshContainer();
                 MeshFilter filter = container.filter;
+                container.collider.sharedMesh = filter.sharedMesh;
+                container.collider.enabled = true;
 
                 //Populate mesh
                 filter.sharedMesh = meshService.Make(node.range.a, node.range.b, node.range.d, node.range.c, this.radius).mesh;
-				//filter.sharedMesh = SubPlane.Make(node.range.a, node.range.b, node.range.d, node.range.c, resolution); 
+                //filter.sharedMesh = SubPlane.Make(node.range.a, node.range.b, node.range.d, node.range.c, resolution); 
 
-				//Set chunk data if it was never computed before
-				if(node.value.bounds == null){
-					node.value.bounds = new Sphere(Vector3.zero, 1);
-					node.value.bounds.center = filter.sharedMesh.bounds.center;
-					/*node.value.bounds.radius = Mathf.Max (
+                //Set chunk data if it was never computed before
+                if (node.value.bounds == null) {
+                    node.value.bounds = new Sphere(Vector3.zero, 1);
+                    node.value.bounds.center = filter.sharedMesh.bounds.center;
+                    /*node.value.bounds.radius = Mathf.Max (
 						filter.sharedMesh.bounds.extents.x,
 						filter.sharedMesh.bounds.extents.y,
 						filter.sharedMesh.bounds.extents.z
 					);*/
-					node.value.bounds.radius = Mathf.Sqrt (
-						filter.sharedMesh.bounds.extents.x * filter.sharedMesh.bounds.extents.x + 
-						filter.sharedMesh.bounds.extents.y * filter.sharedMesh.bounds.extents.y + 
-						filter.sharedMesh.bounds.extents.z * filter.sharedMesh.bounds.extents.z
-					);
-				}
+                    node.value.bounds.radius = Mathf.Sqrt(
+                        filter.sharedMesh.bounds.extents.x * filter.sharedMesh.bounds.extents.x +
+                        filter.sharedMesh.bounds.extents.y * filter.sharedMesh.bounds.extents.y +
+                        filter.sharedMesh.bounds.extents.z * filter.sharedMesh.bounds.extents.z
+                    );
+                }
 
                 //Show node
                 filter.gameObject.SetActive(true);
 
-				//Call highest detail action
-				if(node.depth == this.maxDepth){
-					//Call listeners if exists
-					foreach(System.Action<QuadNode<ChunkData>> fn in this.listeners){
-						fn.Invoke (node);
-					}
-					//Call detailing service if available
-					if (detailService != null)
-						detailService.ShowChunkDetails (node, filter.sharedMesh);
-				}
+                //Call highest detail action
+                if (node.depth == this.maxDepth) {
+                    //Call listeners if exists
+                    foreach (System.Action<QuadNode<ChunkData>> fn in this.listeners) {
+                        fn.Invoke(node);
+                    }
+                    //Call detailing service if available
+                    if (detailService != null)
+                        detailService.ShowChunkDetails(node, filter.sharedMesh);
+                }
 
                 //Add me if I don't already exist
                 this.activeMeshes.Add(container);
                 this.chunkMeshMap[node] = container;
             }
-            if(!activeList.Contains(node))
+            if (!activeList.Contains(node))
                 activeList.Add(node);
         }
 
@@ -469,21 +477,51 @@ namespace Spaceworks {
         /// <param name="node"></param>
         /// <returns></returns>
         private bool canSplit(Vector3 camera, QuadNode<ChunkData> node) {
-			if (node.value.bounds == null)
-				return false;
-			float distance = Vector3.Distance (camera, transform.TransformPoint (node.value.bounds.center));
+            if (node.value.bounds == null)
+                return false;
+            float distance = Vector3.Distance(camera, transform.TransformPoint(node.value.bounds.center));
             return (distance - node.value.bounds.radius) < node.value.breakpoint;
         }
 
-		/// <summary>
-		/// Loops function for each of the active quadtree nodes
+        /// <summary>
+        /// Loops function for each of the active quadtree nodes
+        /// </summary>
+        /// <param name="fn">Fn.</param>
+        public void ForEachActiveLOD(System.Action<QuadNode<ChunkData>> fn) {
+            foreach (QuadNode<ChunkData> node in activeChunks) {
+                fn.Invoke(node);
+            }
+        }
+
+        /// <summary>
+		/// Loops function for each of the active mesh filter components
 		/// </summary>
 		/// <param name="fn">Fn.</param>
-		public void ForEachActiveLOD(System.Action<QuadNode<ChunkData>> fn){
-			foreach (QuadNode<ChunkData> node in activeChunks) {
-				fn.Invoke (node);
-			}
-		}
+		public void ForEachActiveMesh(System.Action<MeshFilter> fn) {
+            foreach (CachedMeshHolder container in this.activeMeshes) {
+                fn.Invoke(container.filter);
+            }
+        }
+
+        /// <summary>
+		/// Loops function for each of the active mesh collider components
+		/// </summary>
+		/// <param name="fn">Fn.</param>
+		public void ForEachActiveCollider(System.Action<MeshCollider> fn) {
+            foreach (CachedMeshHolder container in this.activeMeshes) {
+                fn.Invoke(container.collider);
+            }
+        }
+
+        /// <summary>
+		/// Loops function for each of the active gameobjects
+		/// </summary>
+		/// <param name="fn">Fn.</param>
+		public void ForEachActiveGameobject(System.Action<GameObject> fn) {
+            foreach (CachedMeshHolder container in this.activeMeshes) {
+                fn.Invoke(container.gameObject);
+            }
+        }
 
     }
 
@@ -500,7 +538,7 @@ namespace Spaceworks {
 
         public Planet(PlanetConfig config) {
             this.config = config;
-            
+
         }
 
         /// <summary>
@@ -529,19 +567,19 @@ namespace Spaceworks {
             backFace.UpdateLODs(camera);
         }
 
-		public void UpdateMaterial(GameObject center, bool forceRefresh = false){
-			if (this.config.textureService != null && this.config.material != null) {
-				if (forceRefresh == true) {
-					this.config.textureService.Init (this.config, config.material);
-				}
-				this.config.textureService.SetMaterialPlanetCenter (config.material, center.transform.position);
-			}
-		}
+        public void UpdateMaterial(GameObject center, bool forceRefresh = false) {
+            if (this.config.textureService != null && this.config.material != null) {
+                if (forceRefresh == true) {
+                    this.config.textureService.Init(this.config, config.material);
+                }
+                this.config.textureService.SetMaterialPlanetCenter(config.material, center.transform.position);
+            }
+        }
 
         public void RenderOn(GameObject go) {
             //Create ranges for cubic faces
-			float rad = 1;
-			Range3d topRange = new Range3d(new Vector3(-rad, rad, rad), new Vector3(rad, rad, rad), new Vector3(rad, rad, -rad), new Vector3(-rad, rad, -rad));
+            float rad = 1;
+            Range3d topRange = new Range3d(new Vector3(-rad, rad, rad), new Vector3(rad, rad, rad), new Vector3(rad, rad, -rad), new Vector3(-rad, rad, -rad));
             Range3d bottomRange = new Range3d(new Vector3(-rad, -rad, -rad), new Vector3(rad, -rad, -rad), new Vector3(rad, -rad, rad), new Vector3(-rad, -rad, rad));
 
             Range3d frontRange = new Range3d(new Vector3(rad, rad, rad), new Vector3(-rad, rad, rad), new Vector3(-rad, -rad, rad), new Vector3(rad, -rad, rad));
@@ -553,36 +591,36 @@ namespace Spaceworks {
             if (config.generationService)
                 config.generationService.Init();
 
-            UpdateMaterial (go, true);
+            UpdateMaterial(go, true);
 
-			this.topFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, topRange, config.material);
-			this.topFace.go.name = "Top";
-			this.topFace.transform.SetParent(go.transform);
+            this.topFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, topRange, config.material);
+            this.topFace.go.name = "Top";
+            this.topFace.transform.SetParent(go.transform);
             this.topFace.transform.localPosition = Vector3.zero;
 
-			this.bottomFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, bottomRange, config.material);
-			this.bottomFace.go.name = "Bottom";
-			this.bottomFace.transform.SetParent(go.transform);
+            this.bottomFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, bottomRange, config.material);
+            this.bottomFace.go.name = "Bottom";
+            this.bottomFace.transform.SetParent(go.transform);
             this.bottomFace.transform.localPosition = Vector3.zero;
 
-			this.leftFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, leftRange, config.material);
-			this.leftFace.go.name = "Left";
-			this.leftFace.transform.SetParent(go.transform);
+            this.leftFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, leftRange, config.material);
+            this.leftFace.go.name = "Left";
+            this.leftFace.transform.SetParent(go.transform);
             this.leftFace.transform.localPosition = Vector3.zero;
 
-			this.rightFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, rightRange, config.material);
-			this.rightFace.go.name = "Right";
-			this.rightFace.transform.SetParent(go.transform);
+            this.rightFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, rightRange, config.material);
+            this.rightFace.go.name = "Right";
+            this.rightFace.transform.SetParent(go.transform);
             this.rightFace.transform.localPosition = Vector3.zero;
 
-			this.backFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, backRange, config.material);
-			this.backFace.go.name = "Back";
-			this.backFace.transform.SetParent(go.transform);
+            this.backFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, backRange, config.material);
+            this.backFace.go.name = "Back";
+            this.backFace.transform.SetParent(go.transform);
             this.backFace.transform.localPosition = Vector3.zero;
 
-			this.frontFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, frontRange, config.material);
-			this.frontFace.go.name = "Front";
-			this.frontFace.transform.SetParent(go.transform);
+            this.frontFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, frontRange, config.material);
+            this.frontFace.go.name = "Front";
+            this.frontFace.transform.SetParent(go.transform);
             this.frontFace.transform.localPosition = Vector3.zero;
         }
 

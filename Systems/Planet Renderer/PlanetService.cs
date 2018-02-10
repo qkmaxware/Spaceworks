@@ -34,7 +34,29 @@ namespace Spaceworks {
             generatedPlanet.UpdateLODs(Camera.main.transform.position);
         }
 
-		public override void OnOriginChange (WorldPosition sceneCenter){
+        public override List<Collider> DisableColliders() {
+            List<Collider> colliders = new List<Collider>();
+
+            if (this.generatedPlanet != null) {
+                System.Action<MeshCollider> fn = (x) => {
+                    if (x.enabled) {
+                        colliders.Add(x);
+                        x.enabled = false;
+                    }
+                };
+
+                this.generatedPlanet.topFace.ForEachActiveCollider(fn);
+                this.generatedPlanet.bottomFace.ForEachActiveCollider(fn);
+                this.generatedPlanet.leftFace.ForEachActiveCollider(fn);
+                this.generatedPlanet.rightFace.ForEachActiveCollider(fn);
+                this.generatedPlanet.frontFace.ForEachActiveCollider(fn);
+                this.generatedPlanet.backFace.ForEachActiveCollider(fn);
+            }
+
+            return colliders;
+        }
+
+        public override void OnOriginChange (WorldPosition sceneCenter){
 			base.OnOriginChange (sceneCenter);
 			if (generatedPlanet != null)
 				generatedPlanet.UpdateMaterial (this.gameObject);
