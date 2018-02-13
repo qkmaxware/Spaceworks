@@ -400,6 +400,35 @@ namespace Spaceworks.Orbits.Kepler {
 
         #region derivable_parameters
         /// <summary>
+        /// Distance from the center of the ellipse to either focus
+        /// </summary>
+        public double fociDistance {
+            get {
+                double aa = a * a;
+                double bb = aa * (1 - eccentricity * eccentricity);
+                return aa - bb;
+            }
+        }
+
+        /// <summary>
+        /// Shortcut for focus distance from the center of the ellipse
+        /// </summary>
+        public double c {
+            get {
+                return this.fociDistance;
+            }
+        }
+        
+        /// <summary>
+        /// Center of the ellipse in the parent body's local coordinates
+        /// </summary>
+        public Vector3d center {
+            get {
+                return undoRotation(new Vector3d(-c, 0, 0));
+            }
+        }
+
+        /// <summary>
         /// Normal of the orbital plane in world XYZ coordinates
         /// </summary>
         public Vector3d normal {
@@ -407,12 +436,61 @@ namespace Spaceworks.Orbits.Kepler {
                 Vector3d planeNormal = Vector3d.up;
 
                 //Rotate to match inclination
-                planeNormal = Vector3d.Rotate(planeNormal, this.inclination, Vector3d.forward);
+                planeNormal = Vector3d.Rotate(planeNormal, -this.inclination, Vector3d.right);
 
-                //Rotate to align the ascending node to the reference direction
-                planeNormal = Vector3d.Rotate(planeNormal, this.ascendingNode, Vector3d.up);
+                //Rotate to match ascending node
+                planeNormal = Vector3d.Rotate(planeNormal, -this.ascendingNode, Vector3d.up);
 
                 return planeNormal;
+            }
+        }
+
+        /// <summary>
+        /// Anti-Normal of the orbital plane in world XYZ coordinates
+        /// </summary>
+        public Vector3d antiNormal {
+            get {
+                return -1 * this.normal;
+            }
+        }
+
+        /// <summary>
+        /// Vector pointing in the direction of the ascending node
+        /// </summary>
+        public Vector3d lineOfAscendingNode {
+            get {
+                Vector3d line = Vector3d.back;
+
+                return undoRotation(line);
+            }
+        }
+
+        /// <summary>
+        /// Vector pointing in the direction of the descending node
+        /// </summary>
+        public Vector3d lineOfDescendingNode {
+            get {
+                return -1 * lineOfAscendingNode;
+            }
+        }
+
+        /// <summary>
+        /// Vector pointing in the direction of the periapsis
+        /// </summary>
+        public Vector3d lineOfPeriapsis {
+            get {
+                Vector3d line = Vector3d.right;
+
+                return undoRotation(line);
+            }
+        }
+
+        /// <summary>
+        /// Vector pointing in the direction of the apoapsis
+        /// </summary>
+        public Vector3d lineOfApoapsis {
+            get {
+                return -1 * lineOfPeriapsis;
             }
         }
 
@@ -606,15 +684,15 @@ namespace Spaceworks.Orbits.Kepler {
         private Vector3d undoRotation(Vector3d vec) {
             //Use the XZ plane with +X as the reference direction
             Vector3d rot = new Vector3d(vec);
-            
+
             //Rotate to match inclination
-            rot = Vector3d.Rotate(rot, this.inclination, Vector3d.forward);
+            rot = Vector3d.Rotate(rot, -this.inclination, Vector3d.right);
 
-            //Rotate to align the ascending node to the reference direction
-            rot = Vector3d.Rotate(rot, this.ascendingNode, Vector3d.up);
+            //Rotate to match ascending node
+            rot = Vector3d.Rotate(rot, -this.ascendingNode, Vector3d.up);
 
-            //Rotate the periapsis line
-            rot = Vector3d.Rotate(rot, this.perifocus, this.normal);
+            //Rotate to match the line of periapsis
+            rot = Vector3d.Rotate(rot, -this.perifocus, this.normal);
 
             return rot;
         }
