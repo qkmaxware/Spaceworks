@@ -5,9 +5,12 @@ using UnityEngine;
 namespace Spaceworks {
 
 	public abstract class ITextureService : MonoBehaviour {
-		public abstract void Init (PlanetConfig config, Material mat);
 
-		public abstract void SetMaterialPlanetCenter (Material mat, Vector3 center);
+		public abstract void Init (PlanetConfig config);
+
+		public abstract void SetPlanetCenter (Vector3 center);
+
+        public abstract Material GetMaterialFor(PlanetFace face, QuadNode<ChunkData> node, Mesh mesh);
 	}
 
 }

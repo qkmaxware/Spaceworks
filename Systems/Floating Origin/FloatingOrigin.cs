@@ -25,6 +25,34 @@ namespace Spaceworks.Position {
 			}
 		}
 
+        public static Transform focus {
+            get {
+                if (Exists())
+                    return instance.foci;
+                return null;
+            }
+            set {
+                if (Exists())
+                    instance.foci = value;
+            }
+        }
+
+        public static bool Exists() {
+            return instance != null;
+        }
+
+        public static FloatingOrigin Make() {
+            if (!Exists()) {
+                return instance;
+            }
+            else {
+                GameObject g = new GameObject("Floating Origin Manager");
+                FloatingOrigin org = g.AddComponent<FloatingOrigin>();
+                org.Awake();
+                return org;
+            }
+        }
+
         public Transform foci;
         public float bufferDistance = 1000;
 

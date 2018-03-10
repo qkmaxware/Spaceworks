@@ -1,4 +1,4 @@
-﻿Shader "Custom/Planet" {
+﻿Shader "Spaceworks/Planet" {
 	Properties {
 		[Header(Planet Properties)]
 		_Sea ("Sea Level", Float) = 0.0

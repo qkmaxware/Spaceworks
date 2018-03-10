@@ -19,6 +19,8 @@ namespace Spaceworks.Position {
             this.sectorOffset = new Vector3(0f, 0f, 0f);
             this.sector = new Long3(0, 0, 0);
         }
+        public WorldPosition(Vector3d pos) : this(pos.x, pos.y, pos.z) {
+        }
         public WorldPosition(double x, double y, double z) : this() {
             long deltaSector;
 

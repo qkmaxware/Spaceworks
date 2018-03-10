@@ -1,4 +1,4 @@
-﻿Shader "Custom/Atmosphere" {
+﻿Shader "Spaceworks/Atmosphere" {
 	Properties{
 		_Color("Inner Color", Color) = (1,1,1,1)
 		_Color2("Outer Color", Color) = (1,1,1,1)

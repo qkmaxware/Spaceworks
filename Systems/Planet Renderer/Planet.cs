@@ -17,19 +17,31 @@ namespace Spaceworks {
         public int lodDepth = 1;
         public int highestQualityAtDistance = 50;
 
-        [Header("Coloring")]
-        public Material material;
-
         [Header("References")]
         public IMeshService generationService;
         public ITextureService textureService;
         public IDetailer detailService;
+
+        public PlanetConfig() { }
+        public PlanetConfig(PlanetConfig other) {
+            this.name = other.name;
+            this.radius = other.radius;
+            this.lodDepth = other.lodDepth;
+            this.highestQualityAtDistance = other.highestQualityAtDistance;
+            this.generationService = other.generationService;
+            this.textureService = other.textureService;
+            this.detailService = other.detailService;
+        }
     }
 
     [System.Serializable]
     public class ChunkData {
         public Sphere bounds;
         public float breakpoint = 50;
+    }
+
+    public enum PlanetFaceDirection {
+        Top,Bottom,Left,Right,Front,Back
     }
 
     public class PlanetFace {
@@ -52,7 +64,10 @@ namespace Spaceworks {
             public GameObject gameObject;
             public MeshFilter filter;
             public MeshCollider collider;
+            public MeshRenderer renderer;
         }
+
+        public PlanetFaceDirection direction {get; private set;}
 
         public GameObject go { get; private set; }
         public Transform transform { get { return go.transform; } }
@@ -67,7 +82,7 @@ namespace Spaceworks {
         public IMeshService meshService { get; private set; }
         public IDetailer detailService { get; private set; }
 
-        private Material material;
+        private ITextureService textureService;
 
         //Meshpooling
         private Queue<CachedMeshHolder> meshPool = new Queue<CachedMeshHolder>();
@@ -82,11 +97,12 @@ namespace Spaceworks {
         //Actionlist
         private List<System.Action<QuadNode<ChunkData>>> listeners = new List<System.Action<QuadNode<ChunkData>>>();
 
-        public PlanetFace(IMeshService ms, IDetailer ds, float baseRadius, int minDistance, int treeDepth, Range3d range, Material material) {
+        public PlanetFace(PlanetFaceDirection direction, IMeshService ms, IDetailer ds, float baseRadius, int minDistance, int treeDepth, Range3d range, ITextureService textureService) {
             //Apply params
+            this.direction = direction;
             this.maxResolutionAt = minDistance;
             this.maxDepth = treeDepth;
-            this.material = material;
+            this.textureService = textureService;
             this.meshService = ms;
             this.detailService = ds;
             this.radius = baseRadius;
@@ -316,7 +332,7 @@ namespace Spaceworks {
                 meshFilter.sharedMesh = m;
 
                 MeshRenderer meshRenderer = g.AddComponent<MeshRenderer>();
-                meshRenderer.sharedMaterial = this.material;
+                meshRenderer.sharedMaterial = null;
                 g.SetActive(false);
 
                 MeshCollider collider = g.AddComponent<MeshCollider>();
@@ -326,6 +342,7 @@ namespace Spaceworks {
                 holder.gameObject = g;
                 holder.filter = meshFilter;
                 holder.collider = collider;
+                holder.renderer = meshRenderer;
 
                 meshPool.Enqueue(holder);
             }
@@ -343,6 +360,8 @@ namespace Spaceworks {
                 filter.sharedMesh = mesh.mesh;
                 container.collider.sharedMesh = filter.sharedMesh;
                 container.collider.enabled = true;
+
+                container.renderer.sharedMaterial = textureService.GetMaterialFor(this, node, filter.sharedMesh);
 
                 if (node.value.bounds == null) {
                     node.value.bounds = new Sphere(Vector3.zero, 1);
@@ -386,6 +405,8 @@ namespace Spaceworks {
                     filter.sharedMesh = meshes[i].mesh;
                     container.collider.sharedMesh = filter.sharedMesh;
                     container.collider.enabled = true;
+
+                    container.renderer.sharedMaterial = textureService.GetMaterialFor(this, child, filter.sharedMesh);
 
                     if (child.value.bounds == null) {
                         child.value.bounds = new Sphere(Vector3.zero, 1);
@@ -431,6 +452,8 @@ namespace Spaceworks {
                 //Populate mesh
                 filter.sharedMesh = meshService.Make(node.range.a, node.range.b, node.range.d, node.range.c, this.radius).mesh;
                 //filter.sharedMesh = SubPlane.Make(node.range.a, node.range.b, node.range.d, node.range.c, resolution); 
+
+                container.renderer.sharedMaterial = textureService.GetMaterialFor(this, node, filter.sharedMesh);
 
                 //Set chunk data if it was never computed before
                 if (node.value.bounds == null) {
@@ -568,11 +591,11 @@ namespace Spaceworks {
         }
 
         public void UpdateMaterial(GameObject center, bool forceRefresh = false) {
-            if (this.config.textureService != null && this.config.material != null) {
+            if (this.config.textureService != null) {
                 if (forceRefresh == true) {
-                    this.config.textureService.Init(this.config, config.material);
+                    this.config.textureService.Init(this.config);
                 }
-                this.config.textureService.SetMaterialPlanetCenter(config.material, center.transform.position);
+                this.config.textureService.SetPlanetCenter(center.transform.position);
             }
         }
 
@@ -593,32 +616,32 @@ namespace Spaceworks {
 
             UpdateMaterial(go, true);
 
-            this.topFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, topRange, config.material);
+            this.topFace = new PlanetFace(PlanetFaceDirection.Top, config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, topRange, config.textureService);
             this.topFace.go.name = "Top";
             this.topFace.transform.SetParent(go.transform);
             this.topFace.transform.localPosition = Vector3.zero;
 
-            this.bottomFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, bottomRange, config.material);
+            this.bottomFace = new PlanetFace(PlanetFaceDirection.Bottom, config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, bottomRange, config.textureService);
             this.bottomFace.go.name = "Bottom";
             this.bottomFace.transform.SetParent(go.transform);
             this.bottomFace.transform.localPosition = Vector3.zero;
 
-            this.leftFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, leftRange, config.material);
+            this.leftFace = new PlanetFace(PlanetFaceDirection.Left, config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, leftRange, config.textureService);
             this.leftFace.go.name = "Left";
             this.leftFace.transform.SetParent(go.transform);
             this.leftFace.transform.localPosition = Vector3.zero;
 
-            this.rightFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, rightRange, config.material);
+            this.rightFace = new PlanetFace(PlanetFaceDirection.Right, config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, rightRange, config.textureService);
             this.rightFace.go.name = "Right";
             this.rightFace.transform.SetParent(go.transform);
             this.rightFace.transform.localPosition = Vector3.zero;
 
-            this.backFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, backRange, config.material);
+            this.backFace = new PlanetFace(PlanetFaceDirection.Back, config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, backRange, config.textureService);
             this.backFace.go.name = "Back";
             this.backFace.transform.SetParent(go.transform);
             this.backFace.transform.localPosition = Vector3.zero;
 
-            this.frontFace = new PlanetFace(config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, frontRange, config.material);
+            this.frontFace = new PlanetFace(PlanetFaceDirection.Front, config.generationService, config.detailService, config.radius, config.highestQualityAtDistance, config.lodDepth, frontRange, config.textureService);
             this.frontFace.go.name = "Front";
             this.frontFace.transform.SetParent(go.transform);
             this.frontFace.transform.localPosition = Vector3.zero;

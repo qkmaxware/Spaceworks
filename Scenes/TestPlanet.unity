@@ -511,13 +511,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8874768be55db2f459f2765ac0687350, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  autoDisableColliders: 1
   config:
     name: Demo Planet
     radius: 10000
-    resolution: 24
     lodDepth: 5
     highestQualityAtDistance: 50
-    material: {fileID: 2100000, guid: 50bf5fe01a9a97d4e830810eeb804dce, type: 2}
     generationService: {fileID: 710053354}
     textureService: {fileID: 710053356}
     detailService: {fileID: 710053358}
@@ -546,6 +545,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05bbb662db3add14facd50c165949288, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  resolution: 24
   useSkirts: 1
   skirtSize: 0.99
   surfaceShape:
@@ -585,6 +585,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51dc56c76db42064787d7bbae0084bb0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  subdivisions: 24
 --- !u!114 &710053356
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -596,6 +597,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 751a2c0a6fe766f4587a0738f41fbe00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  material: {fileID: 2100000, guid: 50bf5fe01a9a97d4e830810eeb804dce, type: 2}
 --- !u!114 &710053357
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -607,12 +609,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da7a48469cb33254db818cf9a5d24011, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  resolution: 24
   useSkirts: 1
   skirtSize: 0.99
   range:
     high: 1000
     low: -800
-  heightmap: {fileID: 8900000, guid: d4f41522ff7c1ea458763e74cb4da868, type: 3}
+  heightmapTop: {fileID: 0}
+  heightmapBottom: {fileID: 0}
+  heightmapLeft: {fileID: 0}
+  heightmapRight: {fileID: 0}
+  heightmapFront: {fileID: 0}
+  heightmapBack: {fileID: 0}
   heightColour: 0
 --- !u!114 &710053358
 MonoBehaviour:
