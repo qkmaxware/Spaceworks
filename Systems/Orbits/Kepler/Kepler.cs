@@ -418,7 +418,7 @@ namespace Spaceworks.Orbits.Kepler {
                 return this.fociDistance;
             }
         }
-        
+
         /// <summary>
         /// Center of the ellipse in the parent body's local coordinates
         /// </summary>
@@ -608,6 +608,22 @@ namespace Spaceworks.Orbits.Kepler {
         }
 
         /// <summary>
+        /// Mean orbital speed
+        /// </summary>
+        public double meanOrbitalSpeed {
+            get {
+                return Math.Sqrt(this.standardGravitationalParameter / this.a);
+            }
+        }
+
+        /// <summary>
+        /// Precise orbital speed at a given distance
+        /// </summary>
+        public double preciseOrbtalSpeed(double r){
+            return Math.Sqrt(this.standardGravitationalParameter * (2.0 / r - 1.0 / a));
+        }
+
+        /// <summary>
         /// Shortcut for meanAngularSpeed (rad/s)
         /// </summary>
         public double meanMotion {
@@ -736,15 +752,25 @@ namespace Spaceworks.Orbits.Kepler {
             return this.GetWorldPositionAtEccentricAnomaly(this.eccentricAnomaly);
         }
 
-        /*
+        /// <summary>
+        /// Get the velocity of the planet in world coordinates at the current position
+        /// </summary>
+        /// <returns></returns>
+        public Vector3d GetCurrentVelocity() {
+            Vector3d pos = GetCurrentPosition();
+            double m = pos.magnitude;
+            Vector3d tangent = Vector3d.Cross(this.normal, pos / m);
+            return tangent * this.preciseOrbtalSpeed(m);
+        }
+
         /// <summary>
         /// Add velocity to modify the orbit
         /// </summary>
         /// <param name="deltaV"></param>
         public void AddVelocity(Vector3d deltaV) {
-            Vector3d vel = this.GetVelocity() + deltaV;
+            Vector3d vel = this.GetCurrentVelocity() + deltaV;
 
-            KeplerOrbitalParameters kp = KeplerOrbitalParameters.SolveOrbitalParameters(this.standardGravitationalParameter, this.GetPosition(), vel);
+            KeplerOrbitalParameters kp = KeplerOrbitalParameters.SolveOrbitalParameters(this.standardGravitationalParameter, this.GetCurrentPosition(), vel);
 
             this.semiMajorLength = kp.semiMajorLength;
             this.eccentricity = kp.eccentricity;
@@ -752,7 +778,7 @@ namespace Spaceworks.Orbits.Kepler {
             this.inclination = kp.inclination;
             this.perifocus = kp.perifocus;
             this.ascendingNode = kp.ascendingNode;
-        }*/
+        }
 
         /// <summary>
         /// Move the object forward or backwards in time by a fixed time-step
@@ -763,6 +789,25 @@ namespace Spaceworks.Orbits.Kepler {
             double n_ma = (meanAnomaly + deltaM) % (KeplerConstants.TWO_PI);
 
             this.meanAnomaly = n_ma;
+        }
+
+        /// <summary>
+        /// Get a list of positions along the orbital path
+        /// </summary>
+        /// <returns></returns>
+        public Vector3d[] GetPositions(int resolution) {
+            if (eccentricity < 1) {
+                Vector3d[] p = new Vector3d[resolution];
+                for (int i = 0; i < resolution; i++) {
+                    int j = (int)Mathf.Repeat(i, resolution - 1);
+                    Vector3d pl = GetWorldPositionAtEccentricAnomaly(KeplerConstants.TWO_PI * (j / (double)(resolution - 1)));
+                    p[i] = pl;
+                }
+                return p;
+            }
+            else {
+                return new Vector3d[0];
+            }
         }
 
         public override string ToString() {

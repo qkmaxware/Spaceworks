@@ -4,41 +4,7 @@ using UnityEngine;
 
 namespace Spaceworks {
 
-    public class HeightField {
-
-        private float[] heightmap;
-
-        public int width {
-            get; private set;
-        }
-
-        public int height {
-            get; private set;
-        }
-
-        public float this[int x, int y] {
-            get {
-                return heightmap[x + width * y];
-            }
-            set {
-                heightmap[x + width * y] = value;
-            }
-        }
-
-        public HeightField(int width, int height) {
-            this.width = Mathf.Max(1, width);
-            this.height = Mathf.Max(1, height);
-
-            heightmap = new float[this.width * this.height];
-        }
-
-    }
-
 	public class CubemapMeshGenerator : IMeshService {
-
-		public enum ColourComponent{
-			Red, Green, Blue, Alpha, Luminosity
-		}
 
 		[Header("Mesh Settings")]
         public int resolution = 24;
@@ -47,14 +13,9 @@ namespace Spaceworks {
 		public float skirtSize = 0.9f;
 		public HighLowPair range;
 
-		[Header("Heightmap Settings")]
-		public Texture2D heightmapTop;
-		public Texture2D heightmapBottom;
-		public Texture2D heightmapLeft;
-		public Texture2D heightmapRight;
-		public Texture2D heightmapFront;
-		public Texture2D heightmapBack;
-		public ColourComponent heightColour;
+        [Header("Heightmap Settings")]
+        public CubemapStore heights;
+		public ColourComponent heightColour = ColourComponent.Luminosity;
 
         //Internal calculated heightfields
         private HeightField h_top;
@@ -73,69 +34,17 @@ namespace Spaceworks {
             if (!force && h_top != null)
                 return;
 
-            Texture2D[] maps = new Texture2D[] {
-                heightmapTop,
-                heightmapBottom,
-                heightmapLeft,
-                heightmapRight,
-                heightmapFront,
-                heightmapBack
-            };
-            
-            for (int i = 0; i < 6; i++) {
-                Texture2D map = maps[i];
-                HeightField field = new HeightField(map.width, map.height);
+            h_top = new HeightField(heights.top, heightColour, heights.invertTop.invertX, heights.invertTop.invertY);
+            h_bottom = new HeightField(heights.bottom, heightColour, heights.invertBottom.invertX, heights.invertBottom.invertY);
 
-                for (int w = 0; w < map.width; w++) {
-                    for (int h = 0; h < map.height; h++) {
-                        field[w, h] = SampleColour(map.GetPixel(w,h));
-                    }
-                }
+            h_left = new HeightField(heights.left, heightColour, heights.invertLeft.invertX, heights.invertLeft.invertY);
+            h_right = new HeightField(heights.right, heightColour, heights.invertRight.invertX, heights.invertRight.invertY);
 
-                switch (i) {
-                    case 0:
-                        h_top = field;
-                        break;
-                    case 1:
-                        h_bottom = field;
-                        break;
-                    case 2:
-                        h_left = field;
-                        break;
-                    case 3:
-                        h_right = field;
-                        break;
-                    case 4:
-                        h_front = field;
-                        break;
-                    case 5:
-                        h_back = field;
-                        break;
-                }
-                
-            }
-
+            h_front = new HeightField(heights.front, heightColour, heights.invertFront.invertX, heights.invertFront.invertY);
+            h_back = new HeightField(heights.back, heightColour, heights.invertBack.invertX, heights.invertBack.invertY);
         }
 
-        /// <summary>
-        /// Sampel a height from a colour
-        /// </summary>
-        /// <param name="colour"></param>
-        /// <returns></returns>
-        private float SampleColour(Color colour){
-			switch (heightColour) {
-				case ColourComponent.Alpha:
-					return colour.a;
-				case ColourComponent.Blue:
-					return colour.b;
-				case ColourComponent.Green:
-					return colour.g;
-                case ColourComponent.Luminosity:
-                    return 0.21f * colour.r + 0.72f * colour.g + 0.07f * colour.b;
-				default:
-					return colour.r;
-			}
-		}
+        
 
         /// <summary>
         /// Sample one of the 6 heightfields at the given position

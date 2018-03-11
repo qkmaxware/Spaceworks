@@ -88,12 +88,7 @@ namespace Spaceworks {
                     CubemapMeshGenerator meshService = planetGO.AddComponent<CubemapMeshGenerator>();
                     meshService.range = planet.mountains;
                     meshService.useSkirts = true;
-                    meshService.heightmapTop = planet.heights.top;
-                    meshService.heightmapBottom = planet.heights.bottom;
-                    meshService.heightmapLeft = planet.heights.left;
-                    meshService.heightmapRight = planet.heights.right;
-                    meshService.heightmapFront = planet.heights.front;
-                    meshService.heightmapBack = planet.heights.back;
+                    meshService.heights = planet.heights;
                     meshService.Init();
 
                     CubemapTextureService textureService = planetGO.AddComponent<CubemapTextureService>();

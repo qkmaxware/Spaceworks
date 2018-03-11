@@ -42,7 +42,7 @@ namespace Spaceworks.Position {
         }
 
         public static FloatingOrigin Make() {
-            if (!Exists()) {
+            if (Exists()) {
                 return instance;
             }
             else {

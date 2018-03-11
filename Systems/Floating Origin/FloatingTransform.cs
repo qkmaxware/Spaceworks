@@ -57,6 +57,7 @@ namespace Spaceworks.Position {
         private Collider[] monitoredColliders;
 
         public void Start() {
+            FloatingOrigin.Make(); //Ensure existance of floating origin manager
             FloatingOrigin.Add(this);
             this.worldPosition = new WorldPosition(this.unityPosition);
             UpdateColliderList();
@@ -122,6 +123,7 @@ namespace Spaceworks.Position {
         public virtual List<Collider> DisableColliders() {
             List<Collider> touchedColliders = new List<Collider>();
 
+            if(this.monitoredColliders != null)
             foreach (Collider c in this.monitoredColliders) {
                 if (c.enabled) {
                     touchedColliders.Add(c);
