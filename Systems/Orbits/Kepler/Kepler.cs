@@ -295,6 +295,28 @@ namespace Spaceworks.Orbits.Kepler {
             return kop;
         }
 
+        public KeplerOrbitalParameters() { }
+        public KeplerOrbitalParameters(KeplerOrbitalParameters other) {
+            this.ascendingNode = other.ascendingNode;
+            this.eccentricity = other.eccentricity;
+            this.inclination = other.inclination;
+            this.meanAnomaly = other.meanAnomaly;
+            this.perifocus = other.perifocus;
+            this.semiMajorLength = other.semiMajorLength;
+        }
+
+        public static KeplerOrbitalParameters operator *(KeplerOrbitalParameters a, double b) {
+            KeplerOrbitalParameters kop = new KeplerOrbitalParameters(a);
+            kop.semiMajorLength *= b;
+            return kop;
+        }
+
+        public static KeplerOrbitalParameters operator *(double b, KeplerOrbitalParameters a) {
+            KeplerOrbitalParameters kop = new KeplerOrbitalParameters(a);
+            kop.semiMajorLength *= b;
+            return kop;
+        }
+
         public override string ToString() {
             return JsonUtility.ToJson(this, true);
         }

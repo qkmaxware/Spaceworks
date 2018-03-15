@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+using Spaceworks.Pooling;
+
 namespace Spaceworks {
 
-	public class ProceduralObjectPlacer : IDetailer {
+    public class ProceduralObjectPlacer : IDetailer {
 
 		[System.Serializable]
 		public class PlacementRule {
@@ -14,7 +16,7 @@ namespace Spaceworks {
             public ProceduralPlacementRule rule;
 
 			[HideInInspector] 
-			public Pool pool;
+			public GameObjectPool pool;
 		}
 
 		//List of placement rules in inspector
@@ -24,18 +26,12 @@ namespace Spaceworks {
 		private Dictionary<string, PlacementRule> pools = new Dictionary<string, PlacementRule> ();
 		private Dictionary<QuadNode<ChunkData>, List<GameObject>> active = new Dictionary<QuadNode<ChunkData>, List<GameObject>>();
 		private Dictionary<QuadNode<ChunkData>, Coroutine> spawning = new Dictionary<QuadNode<ChunkData>, Coroutine>();
-		private GameObject poolStore;
 
 		void Start(){
-			//Create object to hold pooled resources
-			poolStore = new GameObject("Detail Pool");
-			poolStore.transform.SetParent (this.transform);
-			poolStore.transform.localPosition = Vector3.zero;
-			poolStore.transform.localScale = Vector3.one;
 
             //Create pools
 			foreach (PlacementRule rule in this.objectsToPool) {
-                Pool pool = new Pool(rule.rule.prefab, rule.poolBufferSize, rule.poolBufferSize, poolStore.transform);
+                GameObjectPool pool = PoolManager.DefaultInstancePool(rule.rule.prefab, rule.poolBufferSize, rule.poolBufferSize);
 				rule.pool = pool;
                 if(!pools.ContainsKey(rule.rule.prefab.name))
 				    pools.Add (rule.rule.prefab.name, rule);
@@ -59,7 +55,7 @@ namespace Spaceworks {
 
             int j = 0;
             foreach (PlacementRule rule in objectsToPool) {
-                yield return rule.rule.SpawnObjectOnChunk(j++, rule.pool, spawned, node, m);
+                yield return rule.rule.SpawnObjectOnChunk(this.transform, j++, rule.pool, spawned, node, m);
             }
            
 		}			

@@ -1,60 +1,9 @@
-﻿using System.Collections;
+﻿using Spaceworks.Pooling;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Spaceworks {
-
-    public class Pool {
-        private int bufferSize = 3;
-        private Transform parent;
-        private GameObject prefab;
-
-        private Queue<GameObject> pool = new Queue<GameObject>();
-
-        public Pool(GameObject poolable, int initialSize, int bufferSize = 3, Transform parent = null) {
-            this.prefab = poolable;
-            this.bufferSize = bufferSize;
-            this.parent = parent;
-            ExpandPool(initialSize);
-        }
-
-        public bool Empty() {
-            return pool.Count < 1;
-        }
-
-        public GameObject Pop() {
-            if (Empty()) {
-                ExpandPool(bufferSize);
-            }
-            GameObject go = pool.Dequeue();
-            return go;
-        }
-
-        public void Push(GameObject go) {
-            pool.Enqueue(go);
-            go.SetActive(false);
-            go.transform.localScale = Vector3.one;
-            go.transform.localRotation = Quaternion.identity;
-            go.transform.localPosition = Vector3.zero;
-        }
-
-        /// <summary>
-        /// Expands the pool.
-        /// </summary>
-        /// <param name="prefab">Prefab.</param>
-        /// <param name="amount">Amount.</param>
-        public void ExpandPool(int amount) {
-            for (int i = 0; i < amount; i++) {
-                GameObject p = GameObject.Instantiate(prefab);
-                p.name = prefab.name; //Preserve name (for pooling finding purposes)
-                if (parent != null)
-                    p.transform.SetParent(parent);
-                p.transform.localScale = Vector3.one;
-                p.SetActive(false);
-                pool.Enqueue(p);
-            }
-        }
-    }
 
     [System.Serializable]
     public class ProceduralPlacementRule{
@@ -84,14 +33,14 @@ namespace Spaceworks {
         public float theta;
         public float phi;
 
-        public IEnumerator SpawnObjectOnChunk(int stackDepth, Pool srcPool, List<GameObject> destinationPool, QuadNode<ChunkData> node, Mesh meshData) {
+        public IEnumerator SpawnObjectOnChunk(Transform planet, int stackDepth, GameObjectPool srcPool, List<GameObject> destinationPool, QuadNode<ChunkData> node, Mesh meshData) {
 
             switch (placementType) {
                 case RuleType.SurfaceRandom:
-                    yield return SpawnSurfaceRandom(stackDepth, srcPool, destinationPool, node, meshData);
+                    yield return SpawnSurfaceRandom(planet, stackDepth, srcPool, destinationPool, node, meshData);
                     break;
                 case RuleType.SpecificCoordinate:
-                    yield return SpawnSpecific(stackDepth, srcPool, destinationPool, node, meshData);
+                    yield return SpawnSpecific(planet, stackDepth, srcPool, destinationPool, node, meshData);
                     break;
             }
 
@@ -154,7 +103,7 @@ namespace Spaceworks {
             return false;
         }
 
-        private IEnumerator SpawnSpecific(int stackDepth, Pool srcPool, List<GameObject> destinationPool, QuadNode<ChunkData> node, Mesh meshData) {
+        private IEnumerator SpawnSpecific(Transform planet, int stackDepth, GameObjectPool srcPool, List<GameObject> destinationPool, QuadNode<ChunkData> node, Mesh meshData) {
 
             Vector3 worldCoordinates = SphericalToCartesian(new Vector3(2, theta, phi));
 
@@ -167,6 +116,7 @@ namespace Spaceworks {
                 GameObject go = srcPool.Pop();
 
                 //Position object from pool
+                go.transform.SetParent(planet);
                 Vector3 pos = SphericalToCartesian(new Vector3(meshData.bounds.center.magnitude, theta, phi));
                 go.SetActive(true);
                 go.transform.localScale = Vector3.one * fixedScale;
@@ -177,7 +127,7 @@ namespace Spaceworks {
             return null;
         }
 
-        private IEnumerator SpawnSurfaceRandom(int stackDepth, Pool srcPool, List<GameObject> destinationPool, QuadNode<ChunkData> node, Mesh meshData) {
+        private IEnumerator SpawnSurfaceRandom(Transform planet, int stackDepth, GameObjectPool srcPool, List<GameObject> destinationPool, QuadNode<ChunkData> node, Mesh meshData) {
             Vector3[] verts = meshData.vertices;
             int[] tris = meshData.triangles;
 
@@ -227,6 +177,7 @@ namespace Spaceworks {
                 GameObject go = srcPool.Pop();
 
                 //Position object from pool
+                go.transform.SetParent(planet);
                 go.SetActive(true);
                 go.transform.localScale = scale;
                 go.transform.localPosition = pos;

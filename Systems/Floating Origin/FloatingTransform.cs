@@ -155,7 +155,7 @@ namespace Spaceworks.Position {
                 touchedColliders = DisableColliders();
             }
 
-            unityPosition = (worldPosition - sceneCenter).ToVector3();
+            unityPosition = (worldPosition - sceneCenter).vector3;
 
             //enable colliders
             if (autoDisableColliders && touchedColliders != null) {

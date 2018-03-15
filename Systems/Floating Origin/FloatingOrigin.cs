@@ -92,7 +92,7 @@ namespace Spaceworks.Position {
             if (Mathf.Abs(foci.transform.position.x) > bufferDistance || Mathf.Abs(foci.transform.position.y) > bufferDistance || Mathf.Abs(foci.transform.position.z) > bufferDistance) {
                 WorldPosition delta = new WorldPosition(foci.transform.position).SectorOnly();
                 this.sceneCenter += delta;
-                foci.transform.position -= delta.ToVector3();
+                foci.transform.position -= delta.vector3;
 
                 foreach (FloatingTransform tr in monitored) {
                     if(tr != null)

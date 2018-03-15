@@ -60,6 +60,26 @@ namespace Spaceworks.Position {
         }
 
 
+        public Vector3 vector3 {
+            get {
+                return new Vector3(
+                    this.sectorOffset.x + this.sector.x * defaultSectorSize.x,
+                    this.sectorOffset.y + this.sector.y * defaultSectorSize.y,
+                    this.sectorOffset.z + this.sector.z * defaultSectorSize.z
+                );
+            }
+        }
+
+        public Vector3d vector3d {
+            get {
+                return new Vector3d(
+                    this.sectorOffset.x + this.sector.x * (double)defaultSectorSize.x,
+                    this.sectorOffset.y + this.sector.y * (double)defaultSectorSize.y,
+                    this.sectorOffset.z + this.sector.z * (double)defaultSectorSize.z
+                );
+            }
+        }
+
         public double magnitude {
             get {
                 double x = this.sectorOffset.x + this.sector.x * defaultSectorSize.x;
@@ -138,14 +158,6 @@ namespace Spaceworks.Position {
             sectorOffset.z -= defaultSectorSize.z * deltaSector;
             sector.z += deltaSector;
 
-        }
-
-        public Vector3 ToVector3() {
-            return new Vector3(
-                this.sectorOffset.x + this.sector.x * defaultSectorSize.x,
-                this.sectorOffset.y + this.sector.y * defaultSectorSize.y,
-                this.sectorOffset.z + this.sector.z * defaultSectorSize.z
-            );
         }
 
         public static WorldPosition operator +(WorldPosition a, WorldPosition b) {
