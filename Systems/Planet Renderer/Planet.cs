@@ -4,6 +4,7 @@ using UnityEngine;
 using System.Linq;
 
 using Spaceworks.Threading;
+using Spaceworks.Pooling;
 
 namespace Spaceworks {
 
@@ -46,6 +47,8 @@ namespace Spaceworks {
 
     public class PlanetFace {
 
+        private static string PlanetFacePoolTag = "SW_PFpool";
+
         private class PlanetSplitTask : Task {
             public QuadNode<ChunkData> parent;
             public MeshData[] meshes = new MeshData[4];
@@ -60,11 +63,17 @@ namespace Spaceworks {
             public PlanetMergeTask(System.Action<Task> fn) : base(fn) { }
         }
 
-        private class CachedMeshHolder {
+        private class CachedMeshHolder : IPoolable{
             public GameObject gameObject;
             public MeshFilter filter;
             public MeshCollider collider;
             public MeshRenderer renderer;
+
+            public void OnCreate() {}
+
+            public void OnDestroy() {
+                gameObject.SetActive(false);
+            }
         }
 
         public PlanetFaceDirection direction {get; private set;}
@@ -85,7 +94,6 @@ namespace Spaceworks {
         private ITextureService textureService;
 
         //Meshpooling
-        private Queue<CachedMeshHolder> meshPool = new Queue<CachedMeshHolder>();
         private List<CachedMeshHolder> activeMeshes = new List<CachedMeshHolder>();
         //Chunkpooling
         private HashSet<QuadNode<ChunkData>> activeChunks = new HashSet<QuadNode<ChunkData>>();
@@ -290,7 +298,7 @@ namespace Spaceworks {
             if (chunkMeshMap.TryGetValue(node, out mf)) {
                 //Hide and pool node
                 this.activeMeshes.Remove(mf);
-                this.meshPool.Enqueue(mf);
+                PoolManager.Current.CustomPool(PlanetFacePoolTag).Push(mf);
                 //mf.collider.enabled = false;
                 mf.gameObject.SetActive(false);
                 //Discard active node
@@ -309,7 +317,7 @@ namespace Spaceworks {
             foreach (CachedMeshHolder mf in this.activeMeshes) {
                 mf.gameObject.SetActive(false);
                 //mf.collider.enabled = false;
-                meshPool.Enqueue(mf);
+                PoolManager.Current.CustomPool(PlanetFacePoolTag).Push(mf);
             }
             activeMeshes.Clear();
             chunkMeshMap.Clear();
@@ -321,10 +329,9 @@ namespace Spaceworks {
         /// </summary>
         /// <returns></returns>
         private CachedMeshHolder PopMeshContainer() {
+            PoolablePool meshPool = PoolManager.Current.CustomPool(PlanetFacePoolTag, 3, 3);
             while (meshPool.Count < 3) {
                 GameObject g = new GameObject("Chunk");
-                g.transform.SetParent(go.transform);
-                g.transform.localPosition = Vector3.zero;
 
                 MeshFilter meshFilter = g.AddComponent<MeshFilter>();
                 Mesh m = new Mesh();
@@ -344,10 +351,13 @@ namespace Spaceworks {
                 holder.collider = collider;
                 holder.renderer = meshRenderer;
 
-                meshPool.Enqueue(holder);
+                meshPool.Push(holder);
             }
 
-            CachedMeshHolder container = meshPool.Dequeue();
+            CachedMeshHolder container = (CachedMeshHolder)meshPool.Pop();
+            container.gameObject.transform.SetParent(go.transform);
+            container.gameObject.transform.localPosition = Vector3.zero;
+            container.gameObject.transform.localScale = Vector3.one;
             return container;
         }
 

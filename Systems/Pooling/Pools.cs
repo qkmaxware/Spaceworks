@@ -23,6 +23,12 @@ namespace Spaceworks.Pooling {
             return pool.Count < 1;
         }
 
+        public int Count {
+            get {
+                return pool.Count;
+            }
+        }
+
         public virtual T Pop() {
             if (Empty()) {
                 return null;
@@ -158,6 +164,10 @@ namespace Spaceworks.Pooling {
 
         public static GameObjectPool DefaultInstancePool(GameObject prefab, int size = 1, int buffer = 3) {
             return Current.InstancePool(prefab, size, buffer);
+        }
+
+        public static PoolablePool DefaultCustomPool(string tag, int size = 1, int buffer = 3) {
+            return Current.CustomPool(tag, size, buffer);
         }
 
         public static GameObject Instantiate(GameObject prefab, Vector3 position, Quaternion rotation) {
