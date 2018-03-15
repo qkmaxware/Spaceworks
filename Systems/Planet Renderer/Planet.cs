@@ -332,6 +332,9 @@ namespace Spaceworks {
             PoolablePool meshPool = PoolManager.Current.CustomPool(PlanetFacePoolTag, 3, 3);
             while (meshPool.Count < 3) {
                 GameObject g = new GameObject("Chunk");
+                g.transform.SetParent(go.transform);
+                g.transform.localPosition = Vector3.zero;
+                g.transform.localScale = Vector3.one;
 
                 MeshFilter meshFilter = g.AddComponent<MeshFilter>();
                 Mesh m = new Mesh();
@@ -355,9 +358,11 @@ namespace Spaceworks {
             }
 
             CachedMeshHolder container = (CachedMeshHolder)meshPool.Pop();
-            container.gameObject.transform.SetParent(go.transform);
-            container.gameObject.transform.localPosition = Vector3.zero;
-            container.gameObject.transform.localScale = Vector3.one;
+            if (container.gameObject.transform.parent != go.transform) {
+                container.gameObject.transform.SetParent(go.transform);
+                container.gameObject.transform.localPosition = Vector3.zero;
+                container.gameObject.transform.localScale = Vector3.one;
+            }
             return container;
         }
 
