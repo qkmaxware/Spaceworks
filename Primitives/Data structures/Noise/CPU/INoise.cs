@@ -5,6 +5,9 @@ using UnityEngine;
 namespace Spaceworks
 {
 
+	/// <summary>
+	/// Class represneting a pair of high and low float values
+	/// </summary>
 	[System.Serializable]
 	public class HighLowPair
 	{
@@ -30,6 +33,9 @@ namespace Spaceworks
 		}
 	}
 
+	/// <summary>
+	/// Class for options for CPU noise generation algorithms
+	/// </summary>
 	[System.Serializable]
 	public class NoiseOptions
 	{
@@ -54,6 +60,9 @@ namespace Spaceworks
 		}
 	}
 
+	/// <summary>
+	/// Interface all noise generators must implement
+	/// </summary>
 	public interface INoise
 	{
 		float Value (Vector3 x, float freq);

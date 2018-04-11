@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace Spaceworks {
 
+    /// <summary>
+    /// Double precision 3d vector
+    /// </summary>
     [System.Serializable]
     public class Vector3d {
         public double x;
@@ -163,55 +166,121 @@ namespace Spaceworks {
 
         #region operators
 
-        //+
+        /// <summary>
+        /// Add two vectors
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static Vector3d operator +(Vector3d a, Vector3d b) {
             return new Vector3d(a.x + b.x, a.y + b.y, a.z + b.z);
         }
 
+        /// <summary>
+        /// Add two vectors
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static Vector3d operator +(Vector3 a, Vector3d b) {
             return new Vector3d(a.x + b.x, a.y + b.y, a.z + b.z);
         }
 
+        /// <summary>
+        /// Add two vectors
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static Vector3d operator +(Vector3d a, Vector3 b) {
             return new Vector3d(a.x + b.x, a.y + b.y, a.z + b.z);
         }
 
-        //-
+        /// <summary>
+        /// Subtract two vectors
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static Vector3d operator -(Vector3d a, Vector3d b) {
             return new Vector3d(a.x - b.x, a.y - b.y, a.z - b.z);
         }
 
+        /// <summary>
+        /// Subtract two vectors
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static Vector3d operator -(Vector3 a, Vector3d b) {
             return new Vector3d(a.x - b.x, a.y - b.y, a.z - b.z);
         }
 
+        /// <summary>
+        /// Subtract two vectors
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static Vector3d operator -(Vector3d a, Vector3 b) {
             return new Vector3d(a.x - b.x, a.y - b.y, a.z - b.z);
         }
 
-        //*
+        /// <summary>
+        /// Scale vector
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="v"></param>
+        /// <returns></returns>
         public static Vector3d operator *(double a, Vector3d v) {
             return new Vector3d(a * v.x, a * v.y, a * v.z);
         }
+        /// <summary>
+        /// Scale vector
+        /// </summary>
+        /// <param name="v"></param>
+        /// <param name="a"></param>
+        /// <returns></returns>
 
         public static Vector3d operator *(Vector3d v, double a) {
             return new Vector3d(a * v.x, a * v.y, a * v.z);
         }
 
-        // /
+        /// <summary>
+        /// Scale vector
+        /// </summary>
+        /// <param name="v"></param>
+        /// <param name="a"></param>
+        /// <returns></returns>
         public static Vector3d operator /(Vector3d v, double a) {
             return v * (1 / a);
         }
 
-        //==
+        /// <summary>
+        /// Test vector equality
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static bool operator ==(Vector3d a, Vector3d b) {
             return a.x == b.x && a.y == b.y && a.z == b.z;
         }
 
+        /// <summary>
+        /// Test vector inequality
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static bool operator !=(Vector3d a, Vector3d b) {
             return !(a == b);
         }
 
+        /// <summary>
+        /// Test vector equality
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
         public override bool Equals(object obj) {
             if (obj is Vector3d) {
                 return this == (Vector3d)obj;
@@ -219,10 +288,18 @@ namespace Spaceworks {
             return false;
         }
 
+        /// <summary>
+        /// Get hashcode
+        /// </summary>
+        /// <returns></returns>
         public override int GetHashCode() {
             return base.GetHashCode();
         }
 
+        /// <summary>
+        /// Convert to string representation
+        /// </summary>
+        /// <returns></returns>
         public override string ToString() {
             return "(" + this.x + ", " + this.y + ", " + this.z + ")"; 
         }

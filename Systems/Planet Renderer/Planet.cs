@@ -105,7 +105,7 @@ namespace Spaceworks {
         //Actionlist
         private List<System.Action<QuadNode<ChunkData>>> listeners = new List<System.Action<QuadNode<ChunkData>>>();
 
-        public PlanetFace(PlanetFaceDirection direction, IMeshService ms, IDetailer ds, float baseRadius, int minDistance, int treeDepth, Range3d range, ITextureService textureService) {
+        public PlanetFace(PlanetFaceDirection direction, IMeshService ms, IDetailer ds, float baseRadius, int minDistance, int treeDepth, Rectangle3 range, ITextureService textureService) {
             //Apply params
             this.direction = direction;
             this.maxResolutionAt = minDistance;
@@ -617,14 +617,14 @@ namespace Spaceworks {
         public void RenderOn(GameObject go) {
             //Create ranges for cubic faces
             float rad = 1;
-            Range3d topRange = new Range3d(new Vector3(-rad, rad, rad), new Vector3(rad, rad, rad), new Vector3(rad, rad, -rad), new Vector3(-rad, rad, -rad));
-            Range3d bottomRange = new Range3d(new Vector3(-rad, -rad, -rad), new Vector3(rad, -rad, -rad), new Vector3(rad, -rad, rad), new Vector3(-rad, -rad, rad));
+            Rectangle3 topRange = new Rectangle3(new Vector3(-rad, rad, rad), new Vector3(rad, rad, rad), new Vector3(rad, rad, -rad), new Vector3(-rad, rad, -rad));
+            Rectangle3 bottomRange = new Rectangle3(new Vector3(-rad, -rad, -rad), new Vector3(rad, -rad, -rad), new Vector3(rad, -rad, rad), new Vector3(-rad, -rad, rad));
 
-            Range3d frontRange = new Range3d(new Vector3(rad, rad, rad), new Vector3(-rad, rad, rad), new Vector3(-rad, -rad, rad), new Vector3(rad, -rad, rad));
-            Range3d backRange = new Range3d(new Vector3(-rad, rad, -rad), new Vector3(rad, rad, -rad), new Vector3(rad, -rad, -rad), new Vector3(-rad, -rad, -rad));
+            Rectangle3 frontRange = new Rectangle3(new Vector3(rad, rad, rad), new Vector3(-rad, rad, rad), new Vector3(-rad, -rad, rad), new Vector3(rad, -rad, rad));
+            Rectangle3 backRange = new Rectangle3(new Vector3(-rad, rad, -rad), new Vector3(rad, rad, -rad), new Vector3(rad, -rad, -rad), new Vector3(-rad, -rad, -rad));
 
-            Range3d rightRange = new Range3d(new Vector3(rad, rad, -rad), new Vector3(rad, rad, rad), new Vector3(rad, -rad, rad), new Vector3(rad, -rad, -rad));
-            Range3d leftRange = new Range3d(new Vector3(-rad, rad, rad), new Vector3(-rad, rad, -rad), new Vector3(-rad, -rad, -rad), new Vector3(-rad, -rad, rad));
+            Rectangle3 rightRange = new Rectangle3(new Vector3(rad, rad, -rad), new Vector3(rad, rad, rad), new Vector3(rad, -rad, rad), new Vector3(rad, -rad, -rad));
+            Rectangle3 leftRange = new Rectangle3(new Vector3(-rad, rad, rad), new Vector3(-rad, rad, -rad), new Vector3(-rad, -rad, -rad), new Vector3(-rad, -rad, rad));
 
             if (config.generationService)
                 config.generationService.Init();

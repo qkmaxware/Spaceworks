@@ -6,16 +6,31 @@ using Spaceworks.Position;
 
 namespace Spaceworks.Orbits {
 
+    /// <summary>
+    /// Elliptical orbit defined by unity transforms and vectors.
+    /// </summary>
     public class SimpleOrbit : FloatingTransform {
 
+        /// <summary>
+        /// Which focal point is the heavy mass centered
+        /// </summary>
         public enum FocalPoint {
             NegativeMajorAxis, PositiveMajorAxis
         }
 
         [Header("Ellipse Shape")]
+        /// <summary>
+        /// Size of semi major axis
+        /// </summary>
         public float semiMajorAxis;
         [Range(0,1)]
+        /// <summary>
+        /// Orbital eccentricity
+        /// </summary>
         public float eccentricity;
+        /// <summary>
+        /// How much is the orbit rotated around the center of mass
+        /// </summary>
         public Vector3 rotation;
 
         public float a {
@@ -37,13 +52,28 @@ namespace Spaceworks.Orbits {
         }
 
         [Header("Ellipse Positioning")]
+        /// <summary>
+        /// At what focal point is the heavy body centered
+        /// </summary>
         public FocalPoint focusPoint = FocalPoint.NegativeMajorAxis;
+        /// <summary>
+        /// Object at the focal point
+        /// </summary>
         public FloatingTransform floatingFocusObject;
+        /// <summary>
+        /// Object at the focal point
+        /// </summary>
         public Transform focusObject;
 
         [Header("Body Parameters")]
         [Range(0, 2 * Mathf.PI)]
+        /// <summary>
+        /// Start position int he orbit
+        /// </summary>
         public float startPosition;
+        /// <summary>
+        /// Speed of orbital motion
+        /// </summary>
         public float orbitalVelocity;
 
         //Internal values
@@ -51,6 +81,10 @@ namespace Spaceworks.Orbits {
         private Vector3 savedRotation;
         private Quaternion _rot = Quaternion.identity;
 
+        /// <summary>
+        /// Compute position of the "negative" focus
+        /// </summary>
+        /// <returns></returns>
         public Vector3 focusNegative {
             get {
                 if (focusPoint == FocalPoint.NegativeMajorAxis)
@@ -63,6 +97,10 @@ namespace Spaceworks.Orbits {
             }
         }
 
+        /// <summary>
+        /// Compute position of the "positive" focus
+        /// </summary>
+        /// <returns></returns>
         public Vector3 focusPositive {
             get {
                 if (focusPoint == FocalPoint.PositiveMajorAxis)
@@ -75,6 +113,10 @@ namespace Spaceworks.Orbits {
             }
         }
 
+        /// <summary>
+        /// Compute position of the ellipse's center
+        /// </summary>
+        /// <returns></returns>
         public Vector3 center {
             get {
                 Vector3 dirToCenterFromFoci = _rot * ((focusPoint == FocalPoint.NegativeMajorAxis) ? new Vector3(1, 0, 0) : new Vector3(-1, 0, 0));
@@ -183,6 +225,9 @@ namespace Spaceworks.Orbits {
             return points;
         }
 
+        /// <summary>
+        /// Helper gizmos
+        /// </summary>
         public void OnDrawGizmos() {
             if (focusObject == null)
                 return;

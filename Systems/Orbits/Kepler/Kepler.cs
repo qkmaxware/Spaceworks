@@ -305,12 +305,24 @@ namespace Spaceworks.Orbits.Kepler {
             this.semiMajorLength = other.semiMajorLength;
         }
 
+        /// <summary>
+        /// Scale the size of the orbit
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static KeplerOrbitalParameters operator *(KeplerOrbitalParameters a, double b) {
             KeplerOrbitalParameters kop = new KeplerOrbitalParameters(a);
             kop.semiMajorLength *= b;
             return kop;
         }
 
+        /// <summary>
+        /// Scale the size of the orbit
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static KeplerOrbitalParameters operator *(double b, KeplerOrbitalParameters a) {
             KeplerOrbitalParameters kop = new KeplerOrbitalParameters(a);
             kop.semiMajorLength *= b;
@@ -323,7 +335,7 @@ namespace Spaceworks.Orbits.Kepler {
     }
 
     /// <summary>
-    /// List of constants used in kepler orbit calculations
+    /// List of constants useful for kepler orbit calculations
     /// </summary>
     public class KeplerConstants {
         //Misc

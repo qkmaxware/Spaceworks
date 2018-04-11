@@ -4,8 +4,15 @@ using UnityEngine;
 
 namespace Spaceworks.Position {
 
+    /// <summary>
+    /// Represents the position of an object obeying floating origin rules
+    /// </summary>
     public class FloatingTransform : MonoBehaviour {
 
+        /// <summary>
+        /// Rotation
+        /// </summary>
+        /// <returns></returns>
         public Quaternion rotation {
             get {
                 return transform.rotation;
@@ -15,6 +22,10 @@ namespace Spaceworks.Position {
             }
         }
 
+        /// <summary>
+        /// Position within the scene
+        /// </summary>
+        /// <returns></returns>
         public Vector3 unityPosition {
             get {
                 return transform.position;
@@ -25,12 +36,19 @@ namespace Spaceworks.Position {
             }
         }
 
+        /// <summary>
+        /// Floating transform this one's position is relative to
+        /// </summary>
+        /// <returns></returns>
         public FloatingTransform parent {
             get;
             set;
         }
 
         private WorldPosition _local = WorldPosition.zero;
+        /// <summary>
+        /// Position in the world (not the scene) ignoring parent transform
+        /// </summary>
         public WorldPosition localPosition {
             get {
                 return _local;
@@ -40,6 +58,9 @@ namespace Spaceworks.Position {
             }
         }
 
+        /// <summary>
+        /// Position in the world (not the scene) taking into account parent position
+        /// </summary>
         public WorldPosition worldPosition {
             get {
                 return (parent == null) ? this.localPosition : this.localPosition + parent.worldPosition;
@@ -52,10 +73,19 @@ namespace Spaceworks.Position {
             }
         }
 
+        /// <summary>
+        /// Flag to disable colliders when moved
+        /// </summary>
         public bool autoDisableColliders = true;
 
+        /// <summary>
+        /// List of colliders to disable
+        /// </summary>
         private Collider[] monitoredColliders;
 
+        /// <summary>
+        /// Register transform with the manager and get list if attached colliders
+        /// </summary>
         public void Start() {
             FloatingOrigin.Make(); //Ensure existance of floating origin manager
             FloatingOrigin.Add(this);

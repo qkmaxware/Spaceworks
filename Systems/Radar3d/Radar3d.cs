@@ -2,24 +2,47 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace Spaceworks.Radar {
+
+/// <summary>
+/// Represents a 3d radar display
+/// </summary>
 public class Radar3d : MonoBehaviour {
 
+    /// <summary>
+    /// Pool of radar instances
+    /// </summary>
     private class RadarPoolInstance {
         public GameObject gameObject;
         public MeshFilter filter;
         public MeshRenderer renderer;
     }
 
+    /// <summary>
+    /// Stores all elements possibly visible on the radar
+    /// </summary>
     public static RadarSceneManager scene;
 
+    /// <summary>
+    /// Size of the radar display in world coordinates
+    /// </summary>
     public float displaySize = 1;
+    /// <summary>
+    /// Radisu of the sphere in which elements are visisble on the radar
+    /// </summary>
     public float worldRange = 40;
 
+    /// <summary>
+    /// Material for radar elements
+    /// </summary>
     public Material trackerMaterial;
 
     private Queue<RadarPoolInstance> radarPool = new Queue<RadarPoolInstance>();
     private Dictionary<Radar3dElement, RadarPoolInstance> usedFilters = new Dictionary<Radar3dElement, RadarPoolInstance>();
 
+    /// <summary>
+    /// Create a radar manager if it doesnt exist
+    /// </summary>
     void Awake() {
         if (!scene) {
             GameObject go = new GameObject("3d Radar Manager");
@@ -27,6 +50,10 @@ public class Radar3d : MonoBehaviour {
         }
     }
 
+    /// <summary>
+    /// Grab a radar display element from the pool
+    /// </summary>
+    /// <returns></returns>
     RadarPoolInstance GetDisplayElement() {
         if (radarPool.Count > 1) {
             return radarPool.Dequeue();
@@ -54,6 +81,9 @@ public class Radar3d : MonoBehaviour {
         }
     }
 
+    /// <summary>
+    /// Update position of radar elements from their real world positions relative to this display
+    /// </summary>
     void Update() {
         float scale = displaySize / worldRange;
 
@@ -106,7 +136,9 @@ public class Radar3d : MonoBehaviour {
     private Vector3[] points;
     private Color[] colours;
     private Material mat;
-
+    /// <summary>
+    /// Create material
+    /// </summary>
     private void SetupMaterial() {
         if (!mat) {
             Shader shader = Shader.Find("Hidden/Internal-Colored");
@@ -122,6 +154,9 @@ public class Radar3d : MonoBehaviour {
         }
     }
 
+    /// <summary>
+    /// Draw vertial height offset lines
+    /// </summary>
     public void OnRenderObject() {
         SetupMaterial();
 
@@ -144,9 +179,14 @@ public class Radar3d : MonoBehaviour {
         GL.PopMatrix();
     }
 
+    /// <summary>
+    /// Helper gizmos
+    /// </summary>
     void OnDrawGizmos() {
         Gizmos.DrawWireSphere(this.transform.position, this.worldRange);
         Gizmos.DrawWireSphere(this.transform.position, this.displaySize);
     }
+
+}
 
 }

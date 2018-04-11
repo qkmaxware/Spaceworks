@@ -2,20 +2,36 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Spaceworks.Orbits.Kepler;
+using Spaceworks.Position;
 
 namespace Spaceworks.SystemModel {
 
+    /// <summary>
+    /// Represents a scalled down version of a solar system.
+    /// </summary>
     public class SolarSystemModel : MonoBehaviour {
 
         [Header("Model")]
-        [Range(1, 100)]
-        public double percentScale = 50;
+        [Tooltip("1 Model unit = X Real Units")]
+        /// <summary>
+        /// Scale of the model. 1 model unit = X real units.
+        /// </summary>
+        public double scale;
 
+        /// <summary>
+        /// Apply all children MassBodyModels
+        /// </summary>
+        void Start() {
+            BuildModel();
+        }
+
+        /// <summary>
+        /// Apply all children MassBodyModels
+        /// </summary>
         public void BuildModel() {
-            double multiplier = 100 / percentScale;
+            double multiplier = scale;
 
             foreach (MassBodyModel model in this.GetComponentsInChildren<MassBodyModel>()) {
-                KeplerOrbitalParameters realKop = model.orbitalParameters * multiplier;
                 if (!model.modelOf)
                     continue;
 
@@ -24,5 +40,16 @@ namespace Spaceworks.SystemModel {
 
         }
 
+        /// <summary>
+        /// Update world position of model components
+        /// </summary>
+        public void Update() {
+            foreach (MassBodyModel model in this.GetComponentsInChildren<MassBodyModel>()) {
+                if (!model.modelOf)
+                    continue;
+
+                model.modelOf.worldPosition = new WorldPosition(model.generatedOrbit.GetCurrentPosition());
+            }
+        }
     }
 }

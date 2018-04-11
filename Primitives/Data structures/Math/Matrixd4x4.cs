@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace Spaceworks {
 
+    /// <summary>
+    /// 4x4 matrix with double precision
+    /// </summary>
     [System.Serializable]
     public class Matrixd4x4 {
 
@@ -13,6 +16,10 @@ namespace Spaceworks {
         public double m31; public double m32; public double m33; public double m34;
         public double m41; public double m42; public double m43; public double m44;
 
+        /// <summary>
+        /// Get a zero matrix
+        /// </summary>
+        /// <returns></returns>
         public static Matrixd4x4 zero {
             get {
                 return new Matrixd4x4(
@@ -24,6 +31,10 @@ namespace Spaceworks {
             }
         }
 
+        /// <summary>
+        /// Get the identity matrix
+        /// </summary>
+        /// <returns></returns>
         public static Matrixd4x4 identity {
             get {
                 return new Matrixd4x4(
@@ -35,6 +46,10 @@ namespace Spaceworks {
             }
         }
 
+        /// <summary>
+        /// Convert from double precision to unity single precision
+        /// </summary>
+        /// <returns></returns>
         public Matrix4x4 matrix4x4 {
             get {
                 return new Matrix4x4(
@@ -48,6 +63,25 @@ namespace Spaceworks {
 
         #region constructors
 
+        /// <summary>
+        /// Create matrix with components
+        /// </summary>
+        /// <param name="m11"></param>
+        /// <param name="m12"></param>
+        /// <param name="m13"></param>
+        /// <param name="m14"></param>
+        /// <param name="m21"></param>
+        /// <param name="m22"></param>
+        /// <param name="m23"></param>
+        /// <param name="m24"></param>
+        /// <param name="m31"></param>
+        /// <param name="m32"></param>
+        /// <param name="m33"></param>
+        /// <param name="m34"></param>
+        /// <param name="m41"></param>
+        /// <param name="m42"></param>
+        /// <param name="m43"></param>
+        /// <param name="m44"></param>
         public Matrixd4x4(double m11 = 0, double m12 = 0, double m13 = 0, double m14 = 0, double m21 = 0, double m22 = 0, double m23 = 0, double m24 = 0, double m31 = 0, double m32 = 0, double m33 = 0, double m34 = 0, double m41 = 0, double m42 = 0, double m43 = 0, double m44 = 0) {
             this.m11 = m11;
             this.m12 = m12;
@@ -70,6 +104,10 @@ namespace Spaceworks {
             this.m44 = m44;
         }
 
+        /// <summary>
+        /// Create from single precision matrix
+        /// </summary>
+        /// <param name="mf"></param>
         public Matrixd4x4(Matrix4x4 mf) {
             this.m11 = mf.m00;
             this.m12 = mf.m01;
@@ -92,6 +130,10 @@ namespace Spaceworks {
             this.m44 = mf.m33;
         }
 
+        /// <summary>
+        /// Copy from other double precision matrix
+        /// </summary>
+        /// <param name="o"></param>
         public Matrixd4x4(Matrixd4x4 o) {
             this.m11 = o.m11;
             this.m12 = o.m12;
@@ -118,7 +160,12 @@ namespace Spaceworks {
 
         #region operators
 
-        //+
+        /// <summary>
+        /// Add two matrices
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static Matrixd4x4 operator +(Matrixd4x4 a, Matrixd4x4 b) {
             return new Matrixd4x4(
                 a.m11 + b.m11, a.m12 + b.m12, a.m13 + b.m13, a.m14 + b.m14,
@@ -128,7 +175,12 @@ namespace Spaceworks {
             );
         }
 
-        //-
+        /// <summary>
+        /// Subtract two matrices
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static Matrixd4x4 operator -(Matrixd4x4 a, Matrixd4x4 b) {
             return new Matrixd4x4(
                 a.m11 - b.m11, a.m12 - b.m12, a.m13 - b.m13, a.m14 - b.m14,
@@ -138,7 +190,12 @@ namespace Spaceworks {
             );
         }
 
-        //*
+        /// <summary>
+        /// Scale all elements of a matrix
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static Matrixd4x4 operator *(Matrixd4x4 a, double b) {
             return new Matrixd4x4(
                 a.m11 * b, a.m12 * b, a.m13 * b, a.m14 + b,
@@ -148,10 +205,22 @@ namespace Spaceworks {
             );
         }
 
+        /// <summary>
+        /// Scale all elements of a matrix
+        /// </summary>
+        /// <param name="b"></param>
+        /// <param name="a"></param>
+        /// <returns></returns>
         public static Matrixd4x4 operator *(double b, Matrixd4x4 a) {
             return a * b;
         }
 
+        /// <summary>
+        /// Multiply two matrices
+        /// </summary>
+        /// <param name="lhs"></param>
+        /// <param name="rhs"></param>
+        /// <returns></returns>
         public static Matrixd4x4 operator *(Matrixd4x4 lhs, Matrixd4x4 rhs) {
             Matrixd4x4 result = new Matrixd4x4();
 
@@ -178,6 +247,12 @@ namespace Spaceworks {
             return result;
         }
 
+        /// <summary>
+        /// Multiply a matrix by a column vector
+        /// </summary>
+        /// <param name="m"></param>
+        /// <param name="vector"></param>
+        /// <returns></returns>
         public static Vector3d operator *(Matrixd4x4 m, Vector3d vector) {
             Vector3d result = new Vector3d();
 
@@ -188,7 +263,12 @@ namespace Spaceworks {
             return result;
         }
 
-        //==
+        /// <summary>
+        /// Matrix equality
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static bool operator ==(Matrixd4x4 a, Matrixd4x4 b) {
             return a.m11 == b.m11 && a.m12 == b.m12 && a.m13 == b.m13 && a.m14 == b.m14
                 && a.m21 == b.m21 && a.m22 == b.m22 && a.m23 == b.m23 && a.m24 == b.m24
@@ -196,10 +276,21 @@ namespace Spaceworks {
                 && a.m41 == b.m41 && a.m42 == b.m42 && a.m43 == b.m43 && a.m44 == b.m44;
         }
 
+        /// <summary>
+        /// Matrix inequality
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static bool operator !=(Matrixd4x4 a, Matrixd4x4 b) {
             return !(a == b);
         }
 
+        /// <summary>
+        /// Matrix equality
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
         public override bool Equals(object obj) {
             if (obj is Matrixd4x4) {
                 return this == (Matrixd4x4)obj;
@@ -207,6 +298,10 @@ namespace Spaceworks {
             return false;
         }
 
+        /// <summary>
+        /// Matrix hashcode
+        /// </summary>
+        /// <returns></returns>
         public override int GetHashCode() {
             return base.GetHashCode();
         }

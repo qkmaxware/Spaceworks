@@ -4,12 +4,27 @@ using UnityEngine;
 
 namespace Spaceworks.Modular {
 
+    /// <summary>
+    /// Manage UI for snapping objects together
+    /// </summary>
     public class ModularBuilder : MonoBehaviour {
 
+        /// <summary>
+        /// Object to place
+        /// </summary>
         public ModularComponent objectInHand;
+        /// <summary>
+        /// Outline of object to place
+        /// </summary>
         public GameObject objectOutline;
+        /// <summary>
+        /// Distance from camera to place outline if no anchor snap is determined
+        /// </summary>
         public float outlineDistance = 2;
 
+        /// <summary>
+        /// Move object around scene and attach to anchor points
+        /// </summary>
         void Update() {
             //Not holding anything
             if (!objectInHand) {
@@ -29,6 +44,9 @@ namespace Spaceworks.Modular {
 
         }
 
+        /// <summary>
+        /// Try to place object on anchor
+        /// </summary>
         private void TryPlace() {
             Ray ray = UnityEngine.Camera.main.ScreenPointToRay(Input.mousePosition);
 

@@ -4,8 +4,16 @@ using UnityEngine;
 
 namespace Spaceworks {
 
+    /// <summary>
+    /// Class for building subdivided planes as a unity mesh
+    /// </summary>
     public class SubPlane {
 
+        /// <summary>
+        /// Create a subdivided plane
+        /// </summary>
+        /// <param name="subdivisions"></param>
+        /// <returns></returns>
         public static Mesh Make(int subdivisions) {
 
             Vector3 topLeft = new Vector3(-1, 0, 1);
@@ -17,6 +25,15 @@ namespace Spaceworks {
 
         }
 
+        /// <summary>
+        /// Create a subdivided plane with the given corner coordinates
+        /// </summary>
+        /// <param name="topLeft"></param>
+        /// <param name="topRight"></param>
+        /// <param name="bottomLeft"></param>
+        /// <param name="bottomRight"></param>
+        /// <param name="subdivisions"></param>
+        /// <returns></returns>
         public static Mesh Make(Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, int subdivisions) {
             Vector3 normal = Vector3.Cross(
                 (topLeft - topRight).normalized,

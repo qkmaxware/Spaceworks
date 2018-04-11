@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace Spaceworks {
 
+    /// <summary>
+    /// Improved perlin noise generation 
+    /// </summary>
     public class Perlin : INoise {
 
         private static readonly int[] p = new int[512];

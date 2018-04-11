@@ -4,22 +4,43 @@ using UnityEngine;
 
 namespace Spaceworks {
 
+    /// <summary>
+    /// Colour component of an image
+    /// </summary>
     public enum ColourComponent {
         Red, Green, Blue, Alpha, Luminosity
     }
 
+    /// <summary>
+    /// Stores floating precision values from heightmaps 
+    /// </summary>
     public class HeightField {
 
+        /// <summary>
+        /// Values in heightfield
+        /// </summary>
         private float[] heightmap;
 
+        /// <summary>
+        /// Width of heightfield
+        /// </summary>
+        /// <returns></returns>
         public int width {
             get; private set;
         }
 
+        /// <summary>
+        /// Height of heightfield
+        /// </summary>
+        /// <returns></returns>
         public int height {
             get; private set;
         }
 
+        /// <summary>
+        /// Index the hightfield with x and y index
+        /// </summary>
+        /// <returns></returns>
         public float this[int x, int y] {
             get {
                 return heightmap[x + width * y];
@@ -29,6 +50,11 @@ namespace Spaceworks {
             }
         }
 
+        /// <summary>
+        /// Create empty heightfield
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
         public HeightField(int width, int height) {
             this.width = Mathf.Max(1, width);
             this.height = Mathf.Max(1, height);
@@ -36,6 +62,13 @@ namespace Spaceworks {
             heightmap = new float[this.width * this.height];
         }
 
+        /// <summary>
+        /// Create heightfield by extracting colour from image
+        /// </summary>
+        /// <param name="texture"></param>
+        /// <param name="component"></param>
+        /// <param name="invertX"></param>
+        /// <param name="invertY"></param>
         public HeightField(Texture2D texture, ColourComponent component = ColourComponent.Luminosity, bool invertX = false, bool invertY = false) {
             this.width = texture.width;
             this.height = texture.height;

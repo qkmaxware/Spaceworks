@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace Spaceworks {
 
+    /// <summary>
+    /// Stores 6 textures in a cubemap configuration along with inversion settings
+    /// </summary>
     [System.Serializable]
     public class CubemapStore {
         [System.Serializable]
