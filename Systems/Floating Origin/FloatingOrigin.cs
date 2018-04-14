@@ -159,12 +159,20 @@ namespace Spaceworks.Position {
             
             if (Mathf.Abs(foci.transform.position.x) > bufferDistance || Mathf.Abs(foci.transform.position.y) > bufferDistance || Mathf.Abs(foci.transform.position.z) > bufferDistance) {
                 WorldPosition delta = new WorldPosition(foci.transform.position).SectorOnly();
+                WorldPosition old = this.sceneCenter;
                 this.sceneCenter += delta;
                 foci.transform.position -= delta.vector3;
 
                 foreach (FloatingTransform tr in monitored) {
-                    if(tr != null)
+                    if(tr != null){
                         tr.OnOriginChange(this.sceneCenter);
+                        if(!tr.worldPosition.SameSector(old) && tr.worldPosition.SameSector(this.sceneCenter)){
+                            tr.OnOriginEnter(this.sceneCenter);
+                        }
+                        if(tr.worldPosition.SameSector(old) && !tr.worldPosition.SameSector(this.sceneCenter)){
+                            tr.OnOriginExit(this.sceneCenter);
+                        }
+                    }
                 }
             }
         }

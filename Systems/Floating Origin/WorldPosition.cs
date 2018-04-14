@@ -266,6 +266,15 @@ namespace Spaceworks.Position {
         }
 
         /// <summary>
+        /// Check if two another world position occupies the same sector of space 
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
+        public bool SameSector(WorldPosition other){
+            return this.sector == other.sector;
+        }
+
+        /// <summary>
         /// Add two world positions
         /// </summary>
         /// <param name="a"></param>

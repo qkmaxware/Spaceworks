@@ -54,7 +54,18 @@ namespace Spaceworks.Position {
                 return _local;
             }
             set {
+                WorldPosition old = _local;
                 _local = value;
+                if(!old.SameSector(value)){
+                    this.OnSectorChange(old, value);
+                }
+                WorldPosition sceneCenter = FloatingOrigin.Make().sceneCenter;
+                if(!old.SameSector(sceneCenter) && value.SameSector(sceneCenter)){
+                    this.OnOriginEnter(sceneCenter);
+                }
+                if(old.SameSector(sceneCenter) && !value.SameSector(sceneCenter)){
+                    this.OnOriginExit(sceneCenter);
+                }
             }
         }
 
@@ -87,10 +98,16 @@ namespace Spaceworks.Position {
         /// Register transform with the manager and get list if attached colliders
         /// </summary>
         public void Start() {
-            FloatingOrigin.Make(); //Ensure existance of floating origin manager
+            WorldPosition center = FloatingOrigin.Make().sceneCenter; //Ensure existance of floating origin manager
             FloatingOrigin.Add(this);
             this.worldPosition = new WorldPosition(this.unityPosition);
             UpdateColliderList();
+
+            if(worldPosition.SameSector(center)){
+				this.OnOriginEnter(center);
+			}else{
+                this.OnOriginExit(center);
+            }
         }
 
         /// <summary>
@@ -194,6 +211,18 @@ namespace Spaceworks.Position {
         }
 
         /// <summary>
+        /// Write this object to console
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString() {
+            return this.name + " - " + this.worldPosition.ToString();
+        }
+
+        //-----------------------------------------------------------------
+        // Event Listeners
+        //-----------------------------------------------------------------
+
+        /// <summary>
         /// Called automatically to update positional data when the offset of the FloatingOrigin changes
         /// </summary>
         /// <param name="sceneCenter"></param>
@@ -201,9 +230,25 @@ namespace Spaceworks.Position {
             UpdateUnityPosition(sceneCenter);
         }
 
-        public override string ToString() {
-            return this.name + " - " + this.worldPosition.ToString();
-        }
+        /// <summary>
+        /// Called automatically when the WorldPosition changes from one sector to another
+        /// </summary>
+        /// <param name="old"></param>
+        /// <param name="new"></param>
+        public virtual void OnSectorChange(WorldPosition oldPosition, WorldPosition newPosition){}
+
+        /// <summary>
+        /// Called automatically when the object's world position sector enters the floating origin's center sector 
+        /// </summary>
+        /// <param name="sceneCenter"></param>
+        public virtual void OnOriginEnter(WorldPosition sceneCenter){}
+
+        /// <summary>
+        /// Called automatically when the object's world position sector exits the floating origin's center sector 
+        /// </summary>
+        /// <param name="sceneCenter"></param>
+        public virtual void OnOriginExit(WorldPosition sceneCenter){}
+
     }
 
 }
