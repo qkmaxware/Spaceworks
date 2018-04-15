@@ -10,7 +10,7 @@ namespace Spaceworks {
     public class SimpleSolarSystem : MonoBehaviour {
 
         public bool generateName = false;
-        public string name;
+        public new string name;
 
         [System.Serializable]
         public class Satellite {

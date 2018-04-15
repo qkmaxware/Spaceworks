@@ -201,14 +201,101 @@ namespace Spaceworks.Orbits.Kepler {
         public double inclination;
 
         /// <summary>
+        /// Is the angle of inclination in degrees or radians
+        /// </summary>
+        public bool isInclinationDegrees = false;
+
+        /// <summary>
+        /// Angle of inclination of orbital plane in radians
+        /// </summary>
+        public double inclinationInRad {
+            get {
+                return isInclinationDegrees ? inclination * KeplerConstants.DEG_TO_RAD : inclination;
+            }
+            set {
+                inclination = (isInclinationDegrees ? value * KeplerConstants.RAD_TO_DEG : value);
+            }
+        }
+
+        /// <summary>
+        /// Angle of inclination of orbital plane in degrees
+        /// </summary>
+        public double inclinationInDeg {
+            get {
+                return isInclinationDegrees ? inclination: inclination * KeplerConstants.RAD_TO_DEG;
+            }
+            set {
+                inclination = (isInclinationDegrees ? value: value * KeplerConstants.DEG_TO_RAD);
+            }
+        }
+
+        /// <summary>
         /// Angle of argument for the periapsis. Angle from ascending node to periapsis
         /// </summary>
         public double perifocus;
 
         /// <summary>
+        /// Is the argument of periapsis in degrees or radians
+        /// </summary>
+        public bool isPerifocusDegrees = false;
+
+        /// <summary>
+        /// Angle of argument for the periapsis. Angle from ascending node to periapsis in radians
+        /// </summary>
+        public double perifocusInRad {
+            get {
+                return (isPerifocusDegrees) ? perifocus * KeplerConstants.DEG_TO_RAD : perifocus;
+            }
+            set {
+                perifocus = (isPerifocusDegrees ? value * KeplerConstants.RAD_TO_DEG : value);
+            }
+        }
+
+        /// <summary>
+        /// Angle of argument for the periapsis. Angle from ascending node to periapsis in degrees
+        /// </summary>
+        public double perifocusInDeg {
+            get {
+                return (isPerifocusDegrees) ? perifocus : perifocus * KeplerConstants.RAD_TO_DEG;
+            }
+            set {
+                perifocus = (isPerifocusDegrees ? value : value * KeplerConstants.DEG_TO_RAD );
+            }
+        }
+
+        /// <summary>
         /// Angle of reference to where the orbit passes through the plane of reference 
         /// </summary>
         public double ascendingNode;
+
+        /// <summary>
+        /// Is the angle for the ascending node measured in degrees
+        /// </summary>
+        public bool isAscendingNodeDegrees = false;
+
+        /// <summary>
+        /// Angle of reference to where the orbit passes through the plane of reference in radians
+        /// </summary>
+        public double ascendingNodeInRad {
+            get {
+                return isAscendingNodeDegrees ? ascendingNode * KeplerConstants.DEG_TO_RAD : ascendingNode;
+            }
+            set {
+                ascendingNode = isAscendingNodeDegrees ? value * KeplerConstants.RAD_TO_DEG : value;
+            }
+        }
+
+        /// <summary>
+        /// Angle of reference to where the orbit passes through the plane of reference in degrees
+        /// </summary>
+        public double ascendingNodeInDeg {
+            get {
+                return isAscendingNodeDegrees ? ascendingNode : ascendingNode * KeplerConstants.RAD_TO_DEG;
+            }
+            set {
+                ascendingNode = isAscendingNodeDegrees ? value : value * KeplerConstants.DEG_TO_RAD;
+            }
+        }
 
         /// <summary>
         /// Create orbital parameters from an object in a cartesian coordinate system centered on a large mass in which to orbit
@@ -285,11 +372,11 @@ namespace Spaceworks.Orbits.Kepler {
             //double mAnom = eAnom - E * Math.Sin(eAnom); //mean anomaly
 
             //Set the values
-            kop.ascendingNode = lan;
+            kop.ascendingNodeInRad = lan;
             kop.eccentricity = E;
-            kop.inclination = i;
+            kop.inclinationInRad = i;
             kop.meanAnomaly = mAnom;
-            kop.perifocus = W;
+            kop.perifocusInRad = W;
             kop.semiMajorLength = a;
 
             return kop;
@@ -297,11 +384,11 @@ namespace Spaceworks.Orbits.Kepler {
 
         public KeplerOrbitalParameters() { }
         public KeplerOrbitalParameters(KeplerOrbitalParameters other) {
-            this.ascendingNode = other.ascendingNode;
+            this.ascendingNodeInRad = other.ascendingNodeInRad;
             this.eccentricity = other.eccentricity;
-            this.inclination = other.inclination;
+            this.inclinationInRad = other.inclinationInRad;
             this.meanAnomaly = other.meanAnomaly;
-            this.perifocus = other.perifocus;
+            this.perifocusInRad = other.perifocusInRad;
             this.semiMajorLength = other.semiMajorLength;
         }
 
@@ -361,8 +448,6 @@ namespace Spaceworks.Orbits.Kepler {
         public static int YEARS_TO_SECONDS = DAYS_TO_SECONDS * 365;
 
         //Rotation
-
-        public static double DEGREE_TO_RADIAN = 0.0174533d;
         public static double PI = Math.PI;
         public static double TWO_PI = 2 * PI;
 
@@ -376,7 +461,7 @@ namespace Spaceworks.Orbits.Kepler {
         //Gravity
 
         public static double G = 6.674e-11d;
-        public static double DEG_TO_RAD = Math.PI / (180);
+        public static double DEG_TO_RAD = Math.PI / (180d);
         public static double RAD_TO_DEG = (180d) / Math.PI;
     }
 
@@ -717,9 +802,9 @@ namespace Spaceworks.Orbits.Kepler {
             parameters.semiMajorLength,
             parameters.eccentricity,
             parameters.meanAnomaly,
-            parameters.inclination,
-            parameters.perifocus,
-            parameters.ascendingNode
+            parameters.inclinationInRad,
+            parameters.perifocusInRad,
+            parameters.ascendingNodeInRad
         ) {}
 
         #endregion
@@ -809,9 +894,9 @@ namespace Spaceworks.Orbits.Kepler {
             this.semiMajorLength = kp.semiMajorLength;
             this.eccentricity = kp.eccentricity;
             this.meanAnomaly = kp.meanAnomaly;
-            this.inclination = kp.inclination;
-            this.perifocus = kp.perifocus;
-            this.ascendingNode = kp.ascendingNode;
+            this.inclination = kp.inclinationInRad;
+            this.perifocus = kp.perifocusInRad;
+            this.ascendingNode = kp.ascendingNodeInRad;
         }
 
         /// <summary>

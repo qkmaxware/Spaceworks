@@ -21,7 +21,7 @@ namespace Spaceworks {
 
         }
 
-        public override MeshData Make(Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, float radius) {
+        public override MeshData Make(Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, Zone2 uvRange, float radius) {
             int width = subdivisions + 2;
             int size = width * width;
             Vector3[] v = new Vector3[size];
@@ -29,11 +29,11 @@ namespace Spaceworks {
             Vector2[] u = new Vector2[size];
             List<int> t = new List<int>();
 
-            Vector2 uvTopLeft = new Vector2(0, 0);
-            Vector2 uvTopRight = new Vector2(0, 1);
-            Vector2 uvBottomLeft = new Vector2(1, 0);
-            Vector2 uvBottomRight = new Vector2(1, 1);
-
+            Vector2 uvTopLeft = uvRange.a;
+			Vector2 uvTopRight = uvRange.b;
+			Vector2 uvBottomLeft = uvRange.d;
+			Vector2 uvBottomRight = uvRange.c;
+            
             float step = 1.0f / (subdivisions + 1);
 
             for (int i = 0; i < width; i++) {

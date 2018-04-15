@@ -9,6 +9,16 @@ namespace Spaceworks {
     /// </summary>
     public class SubPlane {
 
+        public static readonly Vector3 topLeft = new Vector3(-1, 0, 1);
+        public static readonly Vector3 topRight = new Vector3(1, 0, 1);
+        public static readonly Vector3 bottomLeft = new Vector3(-1, 0, -1);
+        public static readonly Vector3 bottomRight = new Vector3(1, 0, -1);
+
+        public static readonly Vector2 uvTopLeft = new Vector2(0, 0);
+        public static readonly Vector2 uvTopRight = new Vector2(0, 1);
+        public static readonly Vector2 uvBottomLeft = new Vector2(1, 0);
+        public static readonly Vector2 uvBottomRight = new Vector2(1, 1);
+
         /// <summary>
         /// Create a subdivided plane
         /// </summary>
@@ -16,12 +26,11 @@ namespace Spaceworks {
         /// <returns></returns>
         public static Mesh Make(int subdivisions) {
 
-            Vector3 topLeft = new Vector3(-1, 0, 1);
-            Vector3 topRight = new Vector3(1, 0, 1);
-            Vector3 bottomLeft = new Vector3(-1, 0, -1);
-            Vector3 bottomRight = new Vector3(1, 0, -1);
-
-            return Make(topLeft, topRight, bottomLeft, bottomRight, subdivisions);
+            return Make(
+                topLeft, topRight, bottomLeft, bottomRight, 
+                uvTopLeft, uvTopRight, uvBottomLeft, uvBottomRight,
+                subdivisions
+            );
 
         }
 
@@ -34,16 +43,15 @@ namespace Spaceworks {
         /// <param name="bottomRight"></param>
         /// <param name="subdivisions"></param>
         /// <returns></returns>
-        public static Mesh Make(Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, int subdivisions) {
+        public static Mesh Make(
+            Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight,
+            Vector2 uvTopLeft, Vector2 uvTopRight, Vector2 uvBottomLeft, Vector2 uvBottomRight,
+            int subdivisions
+        ) {
             Vector3 normal = Vector3.Cross(
                 (topLeft - topRight).normalized,
                 (bottomRight - topRight).normalized
             ).normalized;
-
-            Vector2 uvTopLeft = new Vector2(0, 0);
-            Vector2 uvTopRight = new Vector2(0, 1);
-            Vector2 uvBottomLeft = new Vector2(1, 0);
-            Vector2 uvBottomRight = new Vector2(1, 1);
 
             int width = subdivisions + 2;
             int size = width * width;

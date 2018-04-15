@@ -62,7 +62,7 @@ namespace Spaceworks {
             
         }
 
-        public override MeshData Make (Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, float radius){
+        public override MeshData Make (Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, Zone2 uvRange, float radius){
 			//Replace resolution with one matching out shader's threads
 			//Resolution is number of vertices across any axis
 			int resolution = (resolutionMultipler > 1 ? resolutionMultipler : 1) * numthreads.xy; //Ensure multiple of xy

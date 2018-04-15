@@ -23,7 +23,7 @@ namespace Spaceworks {
         /// Create node covering area
         /// </summary>
         /// <param name="area"></param>
-        public QuadNode(Rectangle3 area) {
+        public QuadNode(Zone3 area) {
             this.range = area;
         }
 
@@ -32,7 +32,7 @@ namespace Spaceworks {
         /// </summary>
         /// <param name="area"></param>
         /// <param name="value"></param>
-        public QuadNode(Rectangle3 area, T value) {
+        public QuadNode(Zone3 area, T value) {
             this.range = area;
             this.value = value;
         }
@@ -57,7 +57,7 @@ namespace Spaceworks {
         /// 2D area this node vocers
         /// </summary>
         /// <returns></returns>
-        public Rectangle3 range {
+        public Zone3 range {
             get; private set;
         }
 
@@ -114,23 +114,15 @@ namespace Spaceworks {
         /// Subdivide this node into 4 children
         /// </summary>
         public void Subdivide() {
-            //Create 4 subdivided ranges
-            Vector3 topl = this.range.a;
-            Vector3 topr = this.range.b;
-            Vector3 btnl = this.range.d;
-            Vector3 btnr = this.range.c;
+            Zone3 NW; Zone3 NE; Zone3 SW; Zone3 SE;
 
-            Vector3 tc = Vector3.Lerp(topl, topr, 0.5f);
-            Vector3 lm = Vector3.Lerp(topl, btnl, 0.5f);
-            Vector3 rm = Vector3.Lerp(topr, btnr, 0.5f);
-            Vector3 mc = Vector3.Lerp(lm, rm, 0.5f);
-            Vector3 bc = Vector3.Lerp(btnl, btnr, 0.5f);
+            this.range.QuadSubdivide(out NE, out NW, out SE, out SW);
 
             //Create 4 children, one for each quadrant
-            this[Quadrant.NorthWest] = new QuadNode<T>(new Rectangle3(topl, tc, mc, lm));
-            this[Quadrant.NorthEast] = new QuadNode<T>(new Rectangle3(tc, topr, rm, mc));
-            this[Quadrant.SouthWest] = new QuadNode<T>(new Rectangle3(lm, mc, bc, btnl));
-            this[Quadrant.SouthEast] = new QuadNode<T>(new Rectangle3(mc, rm, btnr, bc));
+            this[Quadrant.NorthWest] = new QuadNode<T>(NW);
+            this[Quadrant.NorthEast] = new QuadNode<T>(NE);
+            this[Quadrant.SouthWest] = new QuadNode<T>(SW);
+            this[Quadrant.SouthEast] = new QuadNode<T>(SE);
         }
 
         /// <summary>

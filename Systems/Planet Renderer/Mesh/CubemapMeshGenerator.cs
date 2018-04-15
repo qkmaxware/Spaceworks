@@ -194,7 +194,7 @@ namespace Spaceworks {
         /// <param name="bottomRight"></param>
         /// <param name="radius"></param>
         /// <returns></returns>
-        public override MeshData Make (Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, float radius)
+        public override MeshData Make (Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, Zone2 uvRange, float radius)
 		{
 			//Initial Calculations
 			int width = resolution + 2;
@@ -212,10 +212,10 @@ namespace Spaceworks {
 			Vector3 topNormal = (topLeft - bottomLeft).normalized;
 			Vector3 rightNormal = (topRight - topLeft).normalized;
 
-			Vector2 uvTopLeft = new Vector2(0, 0);
-			Vector2 uvTopRight = new Vector2(0, 1);
-			Vector2 uvBottomLeft = new Vector2(1, 0);
-			Vector2 uvBottomRight = new Vector2(1, 1);
+			Vector2 uvTopLeft = uvRange.a;
+			Vector2 uvTopRight = uvRange.b;
+			Vector2 uvBottomLeft = uvRange.d;
+			Vector2 uvBottomRight = uvRange.c;
 
 			float step = 1.0f / (resolution + 1);
 

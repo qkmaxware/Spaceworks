@@ -44,10 +44,20 @@ namespace Spaceworks.SystemModel {
         /// Update world position of model components
         /// </summary>
         public void Update() {
+            double timestep = Time.deltaTime;
             foreach (MassBodyModel model in this.GetComponentsInChildren<MassBodyModel>()) {
-                if (!model.modelOf)
+                //Nothing generated, skip
+                if(model.generatedOrbit == null)
                     continue;
 
+                //Step the orbit in time
+                model.generatedOrbit.StepTime(timestep);
+                
+                //If there is no real world element to this model, skip it
+                if(!model.modelOf)
+                    continue;
+    
+                //Set the position of the real object that this is the model of
                 model.modelOf.worldPosition = new WorldPosition(model.generatedOrbit.GetCurrentPosition());
             }
         }

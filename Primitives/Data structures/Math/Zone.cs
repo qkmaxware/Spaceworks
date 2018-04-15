@@ -5,7 +5,7 @@ namespace Spaceworks {
     /// <summary>
     /// Represents a region of 2d space
     /// </summary>
-    public class Rectangle2 {
+    public class Zone2 {
         public Vector2 a;
         public Vector2 b;
         public Vector2 c;
@@ -14,7 +14,7 @@ namespace Spaceworks {
         /// <summary>
         /// Create empty 
         /// </summary>
-        public Rectangle2() { }
+        public Zone2() { }
 
         /// <summary>
         /// Create from points
@@ -23,7 +23,7 @@ namespace Spaceworks {
         /// <param name="tr"></param>
         /// <param name="br"></param>
         /// <param name="bl"></param>
-        public Rectangle2(Vector2 tl, Vector2 tr, Vector2 br, Vector2 bl) {
+        public Zone2(Vector2 tl, Vector2 tr, Vector2 br, Vector2 bl) {
             this.a = tl; this.b = tr; this.c = br; this.d = bl;
         }
 
@@ -58,8 +58,8 @@ namespace Spaceworks {
         /// </summary>
         /// <param name="f"></param>
         /// <returns></returns>
-        public Rectangle2 scale(float f) {
-            Rectangle2 b = new Rectangle2();
+        public Zone2 scale(float f) {
+            Zone2 b = new Zone2();
             b.a = this.a * f;
             b.b = this.b * f;
             b.c = this.c * f;
@@ -67,12 +67,38 @@ namespace Spaceworks {
             return b;
         }
 
+        /// <summary>
+        /// Subdivide this range into 4 quadrants
+        /// </summary>
+        /// <param name="NE">North east zone</param>
+        /// <param name="NW">North west zone</param>
+        /// <param name="SE">South east zone</param>
+        /// <param name="SW">South west zone</param>
+        public void QuadSubdivide(out Zone2 NE, out Zone2 NW, out Zone2 SE, out Zone2 SW){
+            //Create 4 subdivided ranges
+            Vector2 topl = this.a;
+            Vector2 topr = this.b;
+            Vector2 btnl = this.d;
+            Vector2 btnr = this.c;
+
+            Vector2 tc = Vector3.Lerp(topl, topr, 0.5f);
+            Vector2 lm = Vector3.Lerp(topl, btnl, 0.5f);
+            Vector2 rm = Vector3.Lerp(topr, btnr, 0.5f);
+            Vector2 mc = Vector3.Lerp(lm, rm, 0.5f);
+            Vector2 bc = Vector3.Lerp(btnl, btnr, 0.5f);
+
+            NW = new Zone2(topl, tc, mc, lm);
+            NE = new Zone2(tc, topr, rm, mc);
+            SW = new Zone2(lm, mc, bc, btnl);
+            SE = new Zone2(mc, rm, btnr, bc);
+        }
+
     }
 
     /// <summary>
     /// Flat planar region of 3d space
     /// </summary>
-    public class Rectangle3 {
+    public class Zone3 {
 		/// <summary>
 		/// Top Left
 		/// </summary>
@@ -93,7 +119,7 @@ namespace Spaceworks {
         /// <summary>
         /// Zero area region
         /// </summary>
-        public Rectangle3() { }
+        public Zone3() { }
         /// <summary>
         /// Create from points in 3d space
         /// </summary>
@@ -101,7 +127,7 @@ namespace Spaceworks {
         /// <param name="tr"></param>
         /// <param name="br"></param>
         /// <param name="bl"></param>
-        public Rectangle3(Vector3 tl, Vector3 tr, Vector3 br, Vector3 bl) {
+        public Zone3(Vector3 tl, Vector3 tr, Vector3 br, Vector3 bl) {
             this.a = tl; this.b = tr; this.c = br; this.d = bl;
         }
 
@@ -146,13 +172,39 @@ namespace Spaceworks {
         /// </summary>
         /// <param name="f"></param>
         /// <returns></returns>
-        public Rectangle3 scale(float f) {
-            Rectangle3 b = new Rectangle3();
+        public Zone3 scale(float f) {
+            Zone3 b = new Zone3();
             b.a = this.a * f;
             b.b = this.b * f;
             b.c = this.c * f;
             b.d = this.d * f;
             return b;
+        }
+
+        /// <summary>
+        /// Subdivide this range into 4 quadrants
+        /// </summary>
+        /// <param name="NE">North east zone</param>
+        /// <param name="NW">North west zone</param>
+        /// <param name="SE">South east zone</param>
+        /// <param name="SW">South west zone</param>
+        public void QuadSubdivide(out Zone3 NE, out Zone3 NW, out Zone3 SE, out Zone3 SW){
+            //Create 4 subdivided ranges
+            Vector3 topl = this.a;
+            Vector3 topr = this.b;
+            Vector3 btnl = this.d;
+            Vector3 btnr = this.c;
+
+            Vector3 tc = Vector3.Lerp(topl, topr, 0.5f);
+            Vector3 lm = Vector3.Lerp(topl, btnl, 0.5f);
+            Vector3 rm = Vector3.Lerp(topr, btnr, 0.5f);
+            Vector3 mc = Vector3.Lerp(lm, rm, 0.5f);
+            Vector3 bc = Vector3.Lerp(btnl, btnr, 0.5f);
+
+            NW = new Zone3(topl, tc, mc, lm);
+            NE = new Zone3(tc, topr, rm, mc);
+            SW = new Zone3(lm, mc, bc, btnl);
+            SE = new Zone3(mc, rm, btnr, bc);
         }
 
     }

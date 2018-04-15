@@ -5,6 +5,7 @@ using System.Linq;
 
 using Spaceworks.Threading;
 using Spaceworks.Pooling;
+using System;
 
 namespace Spaceworks {
 
@@ -39,6 +40,7 @@ namespace Spaceworks {
     public class ChunkData {
         public Sphere bounds;
         public float breakpoint = 50;
+        public Zone2 faceRegion;
     }
 
     public enum PlanetFaceDirection {
@@ -48,6 +50,14 @@ namespace Spaceworks {
     public class PlanetFace {
 
         private static string PlanetFacePoolTag = "SW_PFpool";
+        private static Guid classid;
+
+        static PlanetFace() {
+            //Give the mesh pool a very unique id to avoid conflicts with user defined pools
+            classid = Guid.NewGuid();
+            PlanetFacePoolTag = "pf_"+classid;//+ ":SW_PFpool";
+        }
+
 
         private class PlanetSplitTask : Task {
             public QuadNode<ChunkData> parent;
@@ -105,7 +115,7 @@ namespace Spaceworks {
         //Actionlist
         private List<System.Action<QuadNode<ChunkData>>> listeners = new List<System.Action<QuadNode<ChunkData>>>();
 
-        public PlanetFace(PlanetFaceDirection direction, IMeshService ms, IDetailer ds, float baseRadius, int minDistance, int treeDepth, Rectangle3 range, ITextureService textureService) {
+        public PlanetFace(PlanetFaceDirection direction, IMeshService ms, IDetailer ds, float baseRadius, int minDistance, int treeDepth, Zone3 range, ITextureService textureService) {
             //Apply params
             this.direction = direction;
             this.maxResolutionAt = minDistance;
@@ -120,7 +130,20 @@ namespace Spaceworks {
 
             //Create quadtree
             root = new QuadNode<ChunkData>(range);
-            GenerateChunkdata(root);
+            Vector2 topLeft = new Vector2(0,1);
+            Vector2 topRight = new Vector2(1,1);
+            Vector2 bottomRight = new Vector2(1,0);
+            Vector2 bottomLeft = new Vector2(0,0);
+            GenerateChunkdata(
+                root, 
+                //Default zone for root quadnode - covers whole 0:1 range
+                new Zone2(
+                    topLeft,
+                    topRight,
+                    bottomRight,
+                    bottomLeft
+                )
+            );
         }
 
         /// <summary>
@@ -190,7 +213,10 @@ namespace Spaceworks {
                             //Generate Meshes
                             for (int i = 0; i < 4; i++) {
                                 QuadNode<ChunkData> child = self.parent[(Quadrant)i];
-                                MeshData m = meshService.Make(child.range.a, child.range.b, child.range.d, child.range.c, this.radius);
+                                MeshData m = meshService.Make(
+                                    child.range.a, child.range.b, child.range.d, child.range.c,
+                                    child.value.faceRegion,
+                                    this.radius);
                                 self.meshes[i] = m;
                             }
                         });
@@ -230,7 +256,10 @@ namespace Spaceworks {
                             PlanetMergeTask t = new PlanetMergeTask((s) => {
                                 PlanetMergeTask self = (PlanetMergeTask)s;
 
-                                MeshData m = meshService.Make(self.node.range.a, self.node.range.b, self.node.range.d, self.node.range.c, this.radius);
+                                MeshData m = meshService.Make(
+                                    self.node.range.a, self.node.range.b, self.node.range.d, self.node.range.c, 
+                                    self.node.value.faceRegion,
+                                    this.radius);
                                 self.mesh = m;
                             });
                             t.node = node.parent;
@@ -273,11 +302,23 @@ namespace Spaceworks {
         /// Create metadata from a quadnode
         /// </summary>
         /// <param name="node"></param>
-        private void GenerateChunkdata(QuadNode<ChunkData> node) {
+        private void GenerateChunkdata(QuadNode<ChunkData> node, Zone2 region) {
             ChunkData data = new ChunkData();
             data.bounds = null;
             data.breakpoint = maxResolutionAt * Mathf.Pow(2, maxDepth - node.depth);
+            data.faceRegion = region;
             node.value = data;
+        }
+
+        private void GenerateChildChunkdata(QuadNode<ChunkData> parent){
+            Zone2 NE; Zone2 NW; Zone2 SE; Zone2 SW;
+            parent.value.faceRegion.QuadSubdivide(out NE, out NW, out SE, out SW);
+            
+            GenerateChunkdata(parent[Quadrant.NorthEast], NE);
+            GenerateChunkdata(parent[Quadrant.NorthWest], NW);
+            GenerateChunkdata(parent[Quadrant.SouthEast], SE);
+            GenerateChunkdata(parent[Quadrant.SouthWest], SW);
+            
         }
 
         /// <summary>
@@ -287,10 +328,7 @@ namespace Spaceworks {
         private void Split(QuadNode<ChunkData> parent) {
             parent.Subdivide();
 
-            GenerateChunkdata(parent[Quadrant.NorthEast]);
-            GenerateChunkdata(parent[Quadrant.NorthWest]);
-            GenerateChunkdata(parent[Quadrant.SouthEast]);
-            GenerateChunkdata(parent[Quadrant.SouthWest]);
+            GenerateChildChunkdata(parent);
         }
 
         private void DiscardNode(QuadNode<ChunkData> node) {
@@ -465,7 +503,10 @@ namespace Spaceworks {
                 container.collider.enabled = true;
 
                 //Populate mesh
-                filter.sharedMesh = meshService.Make(node.range.a, node.range.b, node.range.d, node.range.c, this.radius).mesh;
+                filter.sharedMesh = meshService.Make(
+                    node.range.a, node.range.b, node.range.d, node.range.c,
+                    node.value.faceRegion,
+                    this.radius).mesh;
                 //filter.sharedMesh = SubPlane.Make(node.range.a, node.range.b, node.range.d, node.range.c, resolution); 
 
                 container.renderer.sharedMaterial = textureService.GetMaterialFor(this, node, filter.sharedMesh);
@@ -617,14 +658,14 @@ namespace Spaceworks {
         public void RenderOn(GameObject go) {
             //Create ranges for cubic faces
             float rad = 1;
-            Rectangle3 topRange = new Rectangle3(new Vector3(-rad, rad, rad), new Vector3(rad, rad, rad), new Vector3(rad, rad, -rad), new Vector3(-rad, rad, -rad));
-            Rectangle3 bottomRange = new Rectangle3(new Vector3(-rad, -rad, -rad), new Vector3(rad, -rad, -rad), new Vector3(rad, -rad, rad), new Vector3(-rad, -rad, rad));
+            Zone3 topRange = new Zone3(new Vector3(-rad, rad, rad), new Vector3(rad, rad, rad), new Vector3(rad, rad, -rad), new Vector3(-rad, rad, -rad));
+            Zone3 bottomRange = new Zone3(new Vector3(-rad, -rad, -rad), new Vector3(rad, -rad, -rad), new Vector3(rad, -rad, rad), new Vector3(-rad, -rad, rad));
 
-            Rectangle3 frontRange = new Rectangle3(new Vector3(rad, rad, rad), new Vector3(-rad, rad, rad), new Vector3(-rad, -rad, rad), new Vector3(rad, -rad, rad));
-            Rectangle3 backRange = new Rectangle3(new Vector3(-rad, rad, -rad), new Vector3(rad, rad, -rad), new Vector3(rad, -rad, -rad), new Vector3(-rad, -rad, -rad));
+            Zone3 frontRange = new Zone3(new Vector3(rad, rad, rad), new Vector3(-rad, rad, rad), new Vector3(-rad, -rad, rad), new Vector3(rad, -rad, rad));
+            Zone3 backRange = new Zone3(new Vector3(-rad, rad, -rad), new Vector3(rad, rad, -rad), new Vector3(rad, -rad, -rad), new Vector3(-rad, -rad, -rad));
 
-            Rectangle3 rightRange = new Rectangle3(new Vector3(rad, rad, -rad), new Vector3(rad, rad, rad), new Vector3(rad, -rad, rad), new Vector3(rad, -rad, -rad));
-            Rectangle3 leftRange = new Rectangle3(new Vector3(-rad, rad, rad), new Vector3(-rad, rad, -rad), new Vector3(-rad, -rad, -rad), new Vector3(-rad, -rad, rad));
+            Zone3 rightRange = new Zone3(new Vector3(rad, rad, -rad), new Vector3(rad, rad, rad), new Vector3(rad, -rad, rad), new Vector3(rad, -rad, -rad));
+            Zone3 leftRange = new Zone3(new Vector3(-rad, rad, rad), new Vector3(-rad, rad, -rad), new Vector3(-rad, -rad, -rad), new Vector3(-rad, -rad, rad));
 
             if (config.generationService)
                 config.generationService.Init();
