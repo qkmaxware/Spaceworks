@@ -47,18 +47,20 @@ namespace Spaceworks.SystemModel {
             double timestep = Time.deltaTime;
             foreach (MassBodyModel model in this.GetComponentsInChildren<MassBodyModel>()) {
                 //Nothing generated, skip
-                if(model.generatedOrbit == null)
+                if(model.generatedScaledOrbit == null)
                     continue;
 
                 //Step the orbit in time
-                model.generatedOrbit.StepTime(timestep);
+                model.generatedScaledOrbit.StepTime(timestep);
                 
                 //If there is no real world element to this model, skip it
                 if(!model.modelOf)
                     continue;
-    
+
                 //Set the position of the real object that this is the model of
-                model.modelOf.worldPosition = new WorldPosition(model.generatedOrbit.GetCurrentPosition());
+                Vector3d pos =  model.generatedScaledOrbit.GetCurrentPosition();
+                model.modelOf.worldPosition = new WorldPosition(pos);
+                model.modelOf.UpdateUnityPosition();
             }
         }
     }

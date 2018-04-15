@@ -202,7 +202,8 @@ namespace Spaceworks.Position {
                 touchedColliders = DisableColliders();
             }
 
-            unityPosition = (worldPosition - sceneCenter).vector3;
+            WorldPosition shifted = (worldPosition - sceneCenter);
+            unityPosition = shifted.vector3;
 
             //enable colliders
             if (autoDisableColliders && touchedColliders != null) {

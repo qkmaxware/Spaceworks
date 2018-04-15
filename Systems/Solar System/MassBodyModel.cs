@@ -13,7 +13,8 @@ namespace Spaceworks.SystemModel {
 
         public double mass;
         public KeplerOrbitalParameters orbitalParameters;
-        public KeplerOrbit generatedOrbit { get; private set; }
+        public KeplerOrbit generatedScaledOrbit { get; private set; }
+        public KeplerOrbit modelOrbit { get; private set; }
 
         public MassBodyModel parent;
         public FloatingTransform modelOf;
@@ -30,7 +31,8 @@ namespace Spaceworks.SystemModel {
             else {
                 KeplerBody body = new KeplerBody(parent.mass, null);
                 KeplerOrbit ko = new KeplerOrbit(body, realKop);
-                generatedOrbit = ko;
+                generatedScaledOrbit = ko;
+                modelOrbit = new KeplerOrbit(body,orbitalParameters);
                 modelOf.worldPosition = new WorldPosition(ko.GetCurrentPosition());
             }
         }

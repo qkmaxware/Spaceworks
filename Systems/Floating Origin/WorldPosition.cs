@@ -21,14 +21,14 @@ namespace Spaceworks.Position {
         /// Position within cell
         /// </summary>
         /// <returns></returns>
-        public Vector3 sectorOffset = new Vector3(0f, 0f, 0f);
+        public Vector3 sectorOffset = new Vector3(0,0,0);
         /// <summary>
         /// Cell index in world
         /// </summary>
         /// <returns></returns>
         public Long3 sector = new Long3(0,0,0);
 
-        public static readonly WorldPosition zero = new WorldPosition();
+        public static readonly WorldPosition zero = new WorldPosition(0,0,0);
 
         /// <summary>
         /// Create at 0,0,0
@@ -250,19 +250,23 @@ namespace Spaceworks.Position {
         /// </summary>
         public void ForceSectorUpdate() {
             long deltaSector;
+            float nx = 0; float ny = 0; float nz = 0;
+            long lx = 0; long ly = 0; long lz = 0;
 
             deltaSector = (long)(sectorOffset.x / defaultSectorSize.x);
-            sectorOffset.x -= defaultSectorSize.x * deltaSector;
-            sector.x += deltaSector;
+            nx = sectorOffset.x - defaultSectorSize.x * deltaSector;
+            lx = sector.x + deltaSector;
 
             deltaSector = (long)(sectorOffset.y / defaultSectorSize.y);
-            sectorOffset.y -= defaultSectorSize.y * deltaSector;
-            sector.y += deltaSector;
+            ny = sectorOffset.y - defaultSectorSize.y * deltaSector;
+            ly = sector.y + deltaSector;
 
             deltaSector = (long)(sectorOffset.z / defaultSectorSize.z);
-            sectorOffset.z -= defaultSectorSize.z * deltaSector;
-            sector.z += deltaSector;
+            nz = sectorOffset.z - defaultSectorSize.z * deltaSector;
+            lz = sector.z + deltaSector;
 
+            sectorOffset = new Vector3(nx, ny, nz);
+            sector = new Long3(lx, ly, lz);
         }
 
         /// <summary>
