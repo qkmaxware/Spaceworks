@@ -33,14 +33,23 @@ namespace Spaceworks {
         public float theta;
         public float phi;
 
-        public IEnumerator SpawnObjectOnChunk(Transform planet, int stackDepth, GameObjectPool srcPool, List<GameObject> destinationPool, QuadNode<ChunkData> node, Mesh meshData) {
+        /// <summary>
+        /// Spawn a single object for the given rule
+        /// </summary>
+        /// <param name="planet"></param>
+        /// <param name="stackDepth"></param>
+        /// <param name="srcPool"></param>
+        /// <param name="destinationPool"></param>
+        /// <param name="node"></param>
+        /// <param name="meshData"></param>
+        public void SpawnObjectOnChunk(System.Random generator, Transform planet, int stackDepth, GameObjectPool srcPool, List<GameObject> destinationPool, QuadNode<ChunkData> node, Mesh meshData) {
 
             switch (placementType) {
                 case RuleType.SurfaceRandom:
-                    yield return SpawnSurfaceRandom(planet, stackDepth, srcPool, destinationPool, node, meshData);
+                    SpawnSurfaceRandom(generator, planet, stackDepth, srcPool, destinationPool, node, meshData);
                     break;
                 case RuleType.SpecificCoordinate:
-                    yield return SpawnSpecific(planet, stackDepth, srcPool, destinationPool, node, meshData);
+                    SpawnSpecific(generator, planet, stackDepth, srcPool, destinationPool, node, meshData);
                     break;
             }
 
@@ -103,7 +112,36 @@ namespace Spaceworks {
             return false;
         }
 
-        private IEnumerator SpawnSpecific(Transform planet, int stackDepth, GameObjectPool srcPool, List<GameObject> destinationPool, QuadNode<ChunkData> node, Mesh meshData) {
+        public int GetRandomSeed(int layer, QuadNode<ChunkData> node){
+            return ((seed + layer) << layer) * node.value.bounds.center.GetHashCode();
+        }
+
+        /// <summary>
+        /// Ask how many objects to spawn for the given layer and node
+        /// </summary>
+        /// <param name="layer"></param>
+        /// <param name="node"></param>
+        /// <returns></returns>
+        public int Init(System.Random rng) {
+            switch (placementType) {
+                case RuleType.SurfaceRandom:
+                    //Number of this prefab to spawn
+                    float slider = (float)rng.NextDouble();
+                    if (probabilityScale < 0) {
+
+                    }
+                    else if (probabilityScale > 0){
+                        
+                    }
+                    return (int)Mathf.Lerp(amountRange.low, amountRange.high, slider);
+                case RuleType.SpecificCoordinate:
+                    return 1;
+                default: 
+                    return 0;
+            }
+        }
+
+        private void SpawnSpecific(System.Random generator, Transform planet, int stackDepth, GameObjectPool srcPool, List<GameObject> destinationPool, QuadNode<ChunkData> node, Mesh meshData) {
 
             Vector3 worldCoordinates = SphericalToCartesian(new Vector3(2, theta, phi));
 
@@ -122,73 +160,58 @@ namespace Spaceworks {
                 go.transform.localScale = Vector3.one * fixedScale;
                 go.transform.localPosition = pos;
                 go.transform.localRotation = Quaternion.FromToRotation(Vector3.up, pos);// * Quaternion.Euler(0, 360 * Random.value, 0);
+            
+                //Add spawned object to reference list
+                destinationPool.Add(go);
             }
             
-            return null;
         }
 
-        private IEnumerator SpawnSurfaceRandom(Transform planet, int stackDepth, GameObjectPool srcPool, List<GameObject> destinationPool, QuadNode<ChunkData> node, Mesh meshData) {
+        private void SpawnSurfaceRandom(System.Random generator, Transform planet, int stackDepth, GameObjectPool srcPool, List<GameObject> destinationPool, QuadNode<ChunkData> node, Mesh meshData) {
             Vector3[] verts = meshData.vertices;
             int[] tris = meshData.triangles;
 
-            //Bitshift ensures that successive rules with the same seeds will end up with different placements
-            Random.InitState((seed << stackDepth) * node.value.bounds.center.GetHashCode());
-
-            //Number of this prefab to spawn
-            float slider = Random.value;
-            if (probabilityScale < 0) {
-
-            }
-            else if (probabilityScale > 0){
-                
-            }
-            int number = (int)Mathf.Lerp(amountRange.low, amountRange.high, slider);
-
             //Place
-            for (int i = 0; i < number; i++) {
-                int faceIdx = Random.Range(0, (tris.Length / 3) - 1) * 3;
+            int faceIdx = generator.Next(0, (tris.Length / 3) - 1) * 3;
 
-                //Random x and y coordinates
-                float rx = Random.value;
-                float ry = Random.value;
+            //Random x and y coordinates
+            float rx = (float)generator.NextDouble();
+            float ry = (float)generator.NextDouble();
 
-                //Random position on face
-                float sqrt_rx = Mathf.Sqrt(rx);
-                Vector3 a = verts[tris[faceIdx]];
-                Vector3 b = verts[tris[faceIdx + 1]];
-                Vector3 c = verts[tris[faceIdx + 2]];
+            //Random position on face
+            float sqrt_rx = Mathf.Sqrt(rx);
+            Vector3 a = verts[tris[faceIdx]];
+            Vector3 b = verts[tris[faceIdx + 1]];
+            Vector3 c = verts[tris[faceIdx + 2]];
 
-                Vector3 pos = (1 - sqrt_rx) * a + (sqrt_rx * (1 - ry)) * b + (sqrt_rx * ry) * c;
+            Vector3 pos = (1 - sqrt_rx) * a + (sqrt_rx * (1 - ry)) * b + (sqrt_rx * ry) * c;
 
-                //Ignore if slope is too much
-                float angle = Vector3.Angle(pos, Vector3.Cross(b - a, c - a));
-                if (angle > slopeLimit)
-                    continue;
+            //Ignore if slope is too much
+            float angle = Vector3.Angle(pos, Vector3.Cross(b - a, c - a));
+            if (angle > slopeLimit)
+                return;
 
-                //Ignore if not in altitude range
-                float distance = pos.magnitude;
-                if (distance < altitudeRange.low || distance > altitudeRange.high)
-                    continue;
+            //Ignore if not in altitude range
+            float distance = pos.magnitude;
+            if (distance < altitudeRange.low || distance > altitudeRange.high)
+                return;
 
-                //Determine scale
-                Vector3 scale = Vector3.one * Random.Range(scaleRange.low, scaleRange.high);
+            //Determine scale
+            Vector3 scale = Vector3.one * Random.Range(scaleRange.low, scaleRange.high);
 
-                //Pool and spawn
-                GameObject go = srcPool.Pop();
+            //Pool and spawn
+            GameObject go = srcPool.Pop();
 
-                //Position object from pool
-                go.transform.SetParent(planet);
-                go.SetActive(true);
-                go.transform.localScale = scale;
-                go.transform.localPosition = pos;
-                go.transform.localRotation = Quaternion.FromToRotation(Vector3.up, pos);// * Quaternion.Euler(0, 360 * Random.value, 0);
+            //Position object from pool
+            go.transform.SetParent(planet);
+            go.SetActive(true);
+            go.transform.localScale = scale;
+            go.transform.localPosition = pos;
+            go.transform.localRotation = Quaternion.FromToRotation(Vector3.up, pos);// * Quaternion.Euler(0, 360 * Random.value, 0);
 
-                //Add spawned object to reference list
-                destinationPool.Add(go);
-
-                //Wait till next frame for next spawning
-                yield return null;
-            }
+            //Add spawned object to reference list
+            destinationPool.Add(go);
+            
         }
 
     }
