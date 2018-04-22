@@ -14,6 +14,8 @@ namespace Spaceworks {
 		public HighLowPair range;
 
         [Header("Heightmap Settings")]
+		public float smallRandomSampleAmplitude = 0;
+		public float smallRandomSampleFrequency = 18;
         public CubemapStore heights;
 		public ColourComponent heightColour = ColourComponent.Luminosity;
 
@@ -150,7 +152,7 @@ namespace Spaceworks {
 		public float GetAltitude (Vector3 pos, float baseRadius){
             //Sample cubemap and add a small random value
             float sampled = Mathf.Lerp(range.low, range.high, SampleHeightmap(pos)) + baseRadius;
-            float rng = 0.25f * perlin.Value(pos, 18f);
+            float rng = smallRandomSampleAmplitude * perlin.Value(pos, smallRandomSampleFrequency);
             return sampled + rng;
 		}
 

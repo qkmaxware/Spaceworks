@@ -14,9 +14,14 @@ namespace Spaceworks.SystemModel {
         [Header("Model")]
         [Tooltip("1 Model unit = X Real Units")]
         /// <summary>
-        /// Scale of the model. 1 model unit = X real units.
+        /// Scale of the model. 1 model unit = X real units. 1Au = 149600000 scale
         /// </summary>
         public double scale;
+
+        /// <summary>
+        /// Animate orbits of model
+        /// </summary>
+        public bool animate = false;
 
         /// <summary>
         /// Apply all children MassBodyModels
@@ -44,6 +49,8 @@ namespace Spaceworks.SystemModel {
         /// Update world position of model components
         /// </summary>
         public void Update() {
+            if(!animate)
+                return;
             double timestep = Time.deltaTime;
             foreach (MassBodyModel model in this.GetComponentsInChildren<MassBodyModel>()) {
                 //Nothing generated, skip
