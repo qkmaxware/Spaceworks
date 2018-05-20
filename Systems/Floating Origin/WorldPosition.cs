@@ -22,13 +22,14 @@ namespace Spaceworks.Position {
         /// </summary>
         /// <returns></returns>
         public Vector3 sectorOffset = new Vector3(0,0,0);
+        
         /// <summary>
         /// Cell index in world
         /// </summary>
         /// <returns></returns>
         public Long3 sector = new Long3(0,0,0);
 
-        public static readonly WorldPosition zero = new WorldPosition(0,0,0);
+        public static readonly WorldPosition zero = new WorldPosition(0.0f,0.0f,0.0f);
 
         /// <summary>
         /// Create at 0,0,0
@@ -69,17 +70,7 @@ namespace Spaceworks.Position {
 
             this.sectorOffset = new Vector3((float)x, (float)y, (float)z);
         }
-        /// <summary>
-        /// Create at some position
-        /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <param name="z"></param>
-        /// <returns></returns>
-        public WorldPosition(float x, float y, float z) : this(){
-            this.sectorOffset = new Vector3(x, y, z);
-            ForceSectorUpdate();
-        }
+       
         /// <summary>
         /// Create at some position
         /// </summary>
@@ -89,6 +80,7 @@ namespace Spaceworks.Position {
             this.sectorOffset = pos;
             ForceSectorUpdate();
         }
+
         /// <summary>
         /// Create at some position in a certain grid cell
         /// </summary>
@@ -100,6 +92,7 @@ namespace Spaceworks.Position {
             this.sector = sector;
             ForceSectorUpdate();
         }
+
         /// <summary>
         /// Create at 0,0,0 within a grid cell
         /// </summary>
@@ -108,6 +101,7 @@ namespace Spaceworks.Position {
         public WorldPosition(Long3 sector) : this() {
             this.sector = sector;
         }
+
         /// <summary>
         /// Copy another position
         /// </summary>

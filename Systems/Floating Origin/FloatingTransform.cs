@@ -227,7 +227,7 @@ namespace Spaceworks.Position {
         /// Called automatically to update positional data when the offset of the FloatingOrigin changes
         /// </summary>
         /// <param name="sceneCenter"></param>
-		public virtual void OnOriginChange(WorldPosition sceneCenter) {
+		public virtual void OnOriginChange(WorldPosition sceneCenter, WorldPosition delta) {
             UpdateUnityPosition(sceneCenter);
         }
 

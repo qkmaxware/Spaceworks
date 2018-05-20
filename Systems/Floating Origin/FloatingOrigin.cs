@@ -165,7 +165,7 @@ namespace Spaceworks.Position {
 
                 foreach (FloatingTransform tr in monitored) {
                     if(tr != null){
-                        tr.OnOriginChange(this.sceneCenter);
+                        tr.OnOriginChange(this.sceneCenter, delta);
                         if(!tr.worldPosition.SameSector(old) && tr.worldPosition.SameSector(this.sceneCenter)){
                             tr.OnOriginEnter(this.sceneCenter);
                         }

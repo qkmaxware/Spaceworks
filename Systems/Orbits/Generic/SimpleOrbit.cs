@@ -31,7 +31,7 @@ namespace Spaceworks.Orbits {
         /// <summary>
         /// How much is the orbit rotated around the center of mass
         /// </summary>
-        public Vector3 rotation;
+        public new Vector3 rotation;
 
         public float a {
             get {
